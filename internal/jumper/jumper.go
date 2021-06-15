@@ -1,10 +1,8 @@
 package jumper
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
 	"os"
-	"time"
 )
 
 type Runtime struct {
@@ -19,20 +17,7 @@ func Run(args []string) error {
 	}
 
 	setup()
-
-	tick := 0
-
-	for {
-		fmt.Printf("loop: %d\n", tick)
-		time.Sleep(time.Millisecond * 10)
-
-		if tick > 1000 {
-			break
-		}
-		tick++
-	}
-
-	return nil
+	return tui()
 }
 
 func setup() {
