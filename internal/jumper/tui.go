@@ -50,7 +50,7 @@ func tuiTicker(g *gocui.Gui) {
 		select {
 		case <-done:
 			return
-		case <-time.After(time.Millisecond * 100):
+		case <-time.After(time.Millisecond * 10):
 			g.Update(tuiLayout)
 		}
 	}
@@ -59,11 +59,14 @@ func tuiTicker(g *gocui.Gui) {
 func tuiLayout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	_ = g.DeleteView("hello")
-	if v, err := g.SetView("hello", maxX/2-7, maxY/2, maxX/2+7, maxY/2+2); err != nil {
+	//if v, err := g.SetView("hello", maxX/2-7, maxY/2, maxX/2+7, maxY/2+2); err != nil {
+	if v, err := g.SetView("hello", -1, -1, maxX, maxY); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		fmt.Fprintf(v, "%d", time.Now().UnixNano())
+		v.Frame = false
+		v.Editable = false
+		fmt.Fprintf(v, "> %d", time.Now().UnixNano())
 	}
 	return nil
 }
