@@ -36,7 +36,10 @@ func tui() error {
 	if err := addArrowKeyBindings(g); err != nil {
 		return err
 	}
-	if err := quitKeyBinds(g); err != nil {
+	if err := addEnterKeyBinding(g); err != nil {
+		return err
+	}
+	if err := quitKeyBinding(g); err != nil {
 		return err
 	}
 
@@ -110,7 +113,7 @@ func writeSelectedProjectLine(v io.Writer, project string) {
 	fmt.Fprint(v, aurora.BgIndex(bgColorGray, line))
 }
 
-func quitKeyBinds(g *gocui.Gui) error {
+func quitKeyBinding(g *gocui.Gui) error {
 	quitHandler := func(g *gocui.Gui, v *gocui.View) error {
 		close(done)
 		fmt.Print(".") // print . so the directory doesn't change
@@ -160,6 +163,20 @@ func addArrowKeyBindings(g *gocui.Gui) error {
 	}
 
 	if err := g.SetKeybinding("", gocui.KeyArrowDown, gocui.ModNone, arrowKeyDownHandler); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func addEnterKeyBinding(g *gocui.Gui) error {
+	enterKeyBinding := func(g *gocui.Gui, v *gocui.View) error {
+		close(done)
+		fmt.Print(rt.Directories[cursorPos])
+		return gocui.ErrQuit
+	}
+
+	if err := g.SetKeybinding("", gocui.KeyEnter, gocui.ModNone, enterKeyBinding); err != nil {
 		return err
 	}
 
