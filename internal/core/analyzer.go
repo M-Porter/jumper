@@ -10,12 +10,14 @@ import (
 	"sync"
 )
 
+var pathStopRegexGit = regexp.MustCompile("/\\.git$")
+
 func Analyze() {
-	pathStopRegexGit := regexp.MustCompile("/\\.git$")
 	excludeRegex := regexpJoinPartsOr(Config.SearchExcludes)
 
 	var projectDirs []string
 	var wg sync.WaitGroup
+
 	wg.Add(len(Config.SearchIncludes))
 
 	for _, search := range Config.SearchIncludes {

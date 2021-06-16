@@ -16,7 +16,7 @@ var (
 
 	mainFrameID = "mainJumperFrame"
 
-	bgColorGray uint8 = 238
+	//bgColorGray uint8 = 238
 
 	cursorPos = 0
 )
@@ -104,13 +104,12 @@ func tuiLayout(g *gocui.Gui) error {
 }
 
 func writeProjectLine(v io.Writer, project string) {
-	fmt.Fprint(v, aurora.BgIndex(bgColorGray, " "))
-	fmt.Fprintf(v, " %s\n", project)
+	fmt.Fprintf(v, "  %s\n", project)
 }
 
 func writeSelectedProjectLine(v io.Writer, project string) {
-	line := fmt.Sprintf("  %s\n", project)
-	fmt.Fprint(v, aurora.BgIndex(bgColorGray, line))
+	fmt.Fprint(v, aurora.Blue("❯"))
+	fmt.Fprint(v, " ", aurora.Bold(aurora.Underline(fmt.Sprintf("%s\n", project))))
 }
 
 func quitKeyBinding(g *gocui.Gui) error {
