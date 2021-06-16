@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+type listStyle int
+
 var (
 	done               = make(chan struct{})
 	tuiWg              sync.WaitGroup
@@ -16,9 +18,11 @@ var (
 
 	mainFrameID = "mainJumperFrame"
 
-	//bgColorGray uint8 = 238
-
 	cursorPos = 0
+
+	listStyleShort    listStyle = 0
+	listStyleLong     listStyle = 1
+	selectedListStyle           = listStyleShort
 )
 
 func tui() error {
@@ -37,6 +41,9 @@ func tui() error {
 		return err
 	}
 	if err := addEnterKeyBinding(g); err != nil {
+		return err
+	}
+	if err := addTabKeyBinding(g); err != nil {
 		return err
 	}
 	if err := quitKeyBinding(g); err != nil {
@@ -103,13 +110,20 @@ func tuiLayout(g *gocui.Gui) error {
 	return nil
 }
 
-func writeProjectLine(v io.Writer, project string) {
-	fmt.Fprintf(v, "  %s\n", project)
+func writeProjectLine(v io.Writer, project Dir) {
+	fmt.Fprint(v, aurora.Inverse(" "))
+	fmt.Fprintf(v, " %s\n", projectLabel(project))
 }
 
-func writeSelectedProjectLine(v io.Writer, project string) {
-	fmt.Fprint(v, aurora.Blue("❯"))
-	fmt.Fprint(v, " ", aurora.Bold(aurora.Underline(fmt.Sprintf("%s\n", project))))
+func writeSelectedProjectLine(v io.Writer, project Dir) {
+	fmt.Fprint(v, aurora.Inverse(fmt.Sprintf("❯ %s \n", projectLabel(project))))
+}
+
+func projectLabel(project Dir) string {
+	if selectedListStyle == listStyleLong {
+		return project.Path
+	}
+	return project.Label
 }
 
 func quitKeyBinding(g *gocui.Gui) error {
@@ -171,11 +185,28 @@ func addArrowKeyBindings(g *gocui.Gui) error {
 func addEnterKeyBinding(g *gocui.Gui) error {
 	enterKeyBinding := func(g *gocui.Gui, v *gocui.View) error {
 		close(done)
-		fmt.Print(rt.Directories[cursorPos])
+		fmt.Print(rt.Directories[cursorPos].Path)
 		return gocui.ErrQuit
 	}
 
 	if err := g.SetKeybinding("", gocui.KeyEnter, gocui.ModNone, enterKeyBinding); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func addTabKeyBinding(g *gocui.Gui) error {
+	tabKeyBinding := func(g *gocui.Gui, v *gocui.View) error {
+		if selectedListStyle == listStyleLong {
+			selectedListStyle = listStyleShort
+			return nil
+		}
+		selectedListStyle = listStyleLong
+		return nil
+	}
+
+	if err := g.SetKeybinding("", gocui.KeyTab, gocui.ModNone, tabKeyBinding); err != nil {
 		return err
 	}
 

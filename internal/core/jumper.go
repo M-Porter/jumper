@@ -3,18 +3,22 @@ package core
 import (
 	"github.com/spf13/cobra"
 	"os"
+	"path/filepath"
 )
 
 type Runtime struct {
-	Directories []string
+	Directories []Dir
+}
+
+type Dir struct {
+	Path  string
+	Label string
 }
 
 var rt *Runtime
 
 func Run(args []string) error {
-	rt = &Runtime{
-		Directories: []string{},
-	}
+	rt = &Runtime{Directories: []Dir{}}
 	go setup()
 	return tui()
 }
@@ -32,6 +36,19 @@ func setup() {
 
 	c, err := readFromCache(Config.cacheFileFullPath)
 	if c != nil {
-		rt.Directories = c.Directories
+		rt.Directories = mapToShape(c.Directories)
 	}
+}
+
+func mapToShape(dirs []string) []Dir {
+	var r []Dir
+
+	for _, d := range dirs {
+		r = append(r, Dir{
+			Path:  d,
+			Label: filepath.Base(d),
+		})
+	}
+
+	return r
 }
