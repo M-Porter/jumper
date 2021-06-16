@@ -17,6 +17,8 @@ var (
 	mainFrameID = "mainJumperFrame"
 
 	bgColorGray uint8 = 238
+
+	cursorPos = 0
 )
 
 func tui() error {
@@ -31,10 +33,10 @@ func tui() error {
 
 	g.SetManagerFunc(tuiLayout)
 
-	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, tuiQuit); err != nil {
+	if err := addArrowKeyBindings(g); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("", gocui.KeyEsc, gocui.ModNone, tuiQuit); err != nil {
+	if err := quitKeyBinds(g); err != nil {
 		return err
 	}
 
@@ -79,25 +81,87 @@ func tuiLayout(g *gocui.Gui) error {
 	v.Frame = false
 	//v.Editable = false
 
+	fmt.Fprintf(v, "Cursor Pos: %d\n", cursorPos)
+
 	// write out the lines
 	for i, dir := range rt.Directories {
 		if i >= maxY {
 			// don't bother render if we got way too many projects
 			break
 		}
-		writeProjectLine(v, dir)
+
+		if i == cursorPos {
+			writeSelectedProjectLine(v, dir)
+		} else {
+			writeProjectLine(v, dir)
+		}
 	}
 
 	return nil
 }
 
 func writeProjectLine(v io.Writer, project string) {
-	fmt.Fprint(v, aurora.BgIndex(bgColorGray, " "), " ")
-	fmt.Fprintf(v, "%s\n", project)
+	fmt.Fprint(v, aurora.BgIndex(bgColorGray, " "))
+	fmt.Fprintf(v, " %s\n", project)
 }
 
-func tuiQuit(g *gocui.Gui, v *gocui.View) error {
-	close(done)
-	fmt.Print(".") // print . so the directory doesn't change
-	return gocui.ErrQuit
+func writeSelectedProjectLine(v io.Writer, project string) {
+	line := fmt.Sprintf("  %s\n", project)
+	fmt.Fprint(v, aurora.BgIndex(bgColorGray, line))
+}
+
+func quitKeyBinds(g *gocui.Gui) error {
+	quitHandler := func(g *gocui.Gui, v *gocui.View) error {
+		close(done)
+		fmt.Print(".") // print . so the directory doesn't change
+		return gocui.ErrQuit
+	}
+
+	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quitHandler); err != nil {
+		return err
+	}
+
+	if err := g.SetKeybinding("", gocui.KeyEsc, gocui.ModNone, quitHandler); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func addArrowKeyBindings(g *gocui.Gui) error {
+	_, maxY := g.Size()
+
+	arrowKeyUpHandler := func(g *gocui.Gui, v *gocui.View) error {
+		if cursorPos <= 0 {
+			cursorPos = 0
+		} else {
+			cursorPos--
+		}
+		return nil
+	}
+
+	arrowKeyDownHandler := func(g *gocui.Gui, v *gocui.View) error {
+		dirCount := len(rt.Directories) - 1
+		if cursorPos >= dirCount {
+			cursorPos = dirCount
+		} else {
+			if cursorPos >= maxY {
+				cursorPos = maxY - 1
+			} else {
+				cursorPos++
+			}
+		}
+
+		return nil
+	}
+
+	if err := g.SetKeybinding("", gocui.KeyArrowUp, gocui.ModNone, arrowKeyUpHandler); err != nil {
+		return err
+	}
+
+	if err := g.SetKeybinding("", gocui.KeyArrowDown, gocui.ModNone, arrowKeyDownHandler); err != nil {
+		return err
+	}
+
+	return nil
 }
