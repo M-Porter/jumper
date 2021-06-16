@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/m-porter/jumper/internal/jumper"
+	"github.com/m-porter/jumper/internal/core"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -11,18 +11,18 @@ var flagAnalyze bool
 
 func execute(cmd *cobra.Command, args []string) error {
 	if flagAnalyze {
-		jumper.Analyze()
+		core.Analyze()
 		return nil
 	}
 
-	return jumper.Run(args)
+	return core.Run(args)
 }
 
 func main() {
-	cobra.OnInitialize(jumper.Init)
+	cobra.OnInitialize(core.Init)
 
 	jumperCmd := &cobra.Command{
-		Use:   "jumper",
+		Use:   "core",
 		Short: "Seamlessly jump between projects on your machine.",
 		RunE:  execute,
 	}

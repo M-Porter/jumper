@@ -1,4 +1,4 @@
-package jumper
+package core
 
 import (
 	"github.com/mitchellh/go-homedir"
@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ConfigDir      = ".jumper"
+	ConfigDir      = ".core"
 	ConfigFilename = "config"
 	ConfigType     = "yml"
 
@@ -60,7 +60,7 @@ func Init() {
 
 	err = viper.SafeWriteConfig()
 	if _, ok := err.(viper.ConfigFileAlreadyExistsError); ok {
-		// ignore, this is ok. just means the jumper already exists so
+		// ignore, this is ok. just means the core already exists so
 		// we don't need to write a new one
 	} else {
 		cobra.CheckErr(err)

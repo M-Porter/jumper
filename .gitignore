@@ -8,4 +8,4 @@
 *.out
 vendor/
 .idea/
-./jumper
+jumper

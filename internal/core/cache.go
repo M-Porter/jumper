@@ -1,4 +1,4 @@
-package jumper
+package core
 
 import (
 	"bytes"

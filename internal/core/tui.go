@@ -1,19 +1,26 @@
-package jumper
+package core
 
 import (
 	"fmt"
 	"github.com/jroimartin/gocui"
+	"github.com/logrusorgru/aurora/v3"
+	"io"
 	"sync"
 	"time"
 )
 
 var (
-	done  = make(chan struct{})
-	tuiWg sync.WaitGroup
+	done               = make(chan struct{})
+	tuiWg              sync.WaitGroup
+	tickerTimeInterval = time.Millisecond * 100
+
+	mainFrameID = "mainJumperFrame"
+
+	bgColorGray uint8 = 238
 )
 
 func tui() error {
-	g, err := gocui.NewGui(gocui.OutputNormal)
+	g, err := gocui.NewGui(gocui.Output256)
 	if err != nil {
 		return err
 	}
@@ -46,11 +53,14 @@ func tui() error {
 func tuiTicker(g *gocui.Gui) {
 	defer tuiWg.Done()
 
+	ticker := time.NewTicker(tickerTimeInterval)
+
 	for {
 		select {
 		case <-done:
+			ticker.Stop()
 			return
-		case <-time.After(time.Millisecond * 10):
+		case <-ticker.C:
 			g.Update(tuiLayout)
 		}
 	}
@@ -58,17 +68,32 @@ func tuiTicker(g *gocui.Gui) {
 
 func tuiLayout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
-	_ = g.DeleteView("hello")
-	//if v, err := g.SetView("hello", maxX/2-7, maxY/2, maxX/2+7, maxY/2+2); err != nil {
-	if v, err := g.SetView("hello", -1, -1, maxX, maxY); err != nil {
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-		v.Frame = false
-		v.Editable = false
-		fmt.Fprintf(v, "> %d", time.Now().UnixNano())
+
+	_ = g.DeleteView(mainFrameID)
+
+	v, err := g.SetView(mainFrameID, -1, -1, maxX, maxY)
+	if err != nil && err != gocui.ErrUnknownView {
+		return err
 	}
+
+	v.Frame = false
+	//v.Editable = false
+
+	// write out the lines
+	for i, dir := range rt.Directories {
+		if i >= maxY {
+			// don't bother render if we got way too many projects
+			break
+		}
+		writeProjectLine(v, dir)
+	}
+
 	return nil
+}
+
+func writeProjectLine(v io.Writer, project string) {
+	fmt.Fprint(v, aurora.BgIndex(bgColorGray, " "), " ")
+	fmt.Fprintf(v, "%s\n", project)
 }
 
 func tuiQuit(g *gocui.Gui, v *gocui.View) error {
