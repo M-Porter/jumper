@@ -87,21 +87,3 @@ func decodeList(b []byte) (*Cache, error) {
 	}
 	return c, nil
 }
-
-//func encodeList(list []string) ([]byte, error) {
-//	var b bytes.Buffer
-//	enc := gob.NewEncoder(&b)
-//	if err := enc.Encode(list); err != nil {
-//		return nil, err
-//	}
-//	return b.Bytes(), nil
-//}
-//
-//func decodeList(b []byte) ([]string, error) {
-//	var dirs []string
-//	d := gob.NewDecoder(bytes.NewReader(b))
-//	if err := d.Decode(&dirs); err != nil {
-//		return nil, err
-//	}
-//	return dirs, nil
-//}
