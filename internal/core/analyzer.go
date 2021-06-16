@@ -10,15 +10,8 @@ import (
 	"sync"
 )
 
-var (
-	pathStopRegexGit *regexp.Regexp
-)
-
-func init() {
-	pathStopRegexGit = regexp.MustCompile("/\\.git$")
-}
-
 func Analyze() {
+	pathStopRegexGit := regexp.MustCompile("/\\.git$")
 	excludeRegex := regexpJoinPartsOr(Config.SearchExcludes)
 
 	var projectDirs []string

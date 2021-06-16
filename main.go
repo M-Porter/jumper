@@ -14,7 +14,6 @@ func execute(cmd *cobra.Command, args []string) error {
 		core.Analyze()
 		return nil
 	}
-
 	return core.Run(args)
 }
 
