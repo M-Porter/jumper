@@ -120,16 +120,20 @@ func resultsViewUpdater(app *tview.Application, view *tview.Flex) {
 			app.Stop()
 			return
 		case <-ticker.C:
-			view.Clear()
 			_, _, _, resultsListMaxH = view.GetInnerRect()
-			addResults(view)
-			app.Draw()
+			app.QueueUpdateDraw(func() {
+				view.Clear()
+				addResults(view)
+			})
 		}
 	}
 }
 
 func addResults(view *tview.Flex) {
+	//results := filterDirectories(rt.Directories, searchVal)
+
 	for i, dir := range rt.Directories {
+		//for i, result := range results {
 		line := tview.NewTextView()
 		line.SetBackgroundColor(tcell.ColorReset)
 		line.SetTextColor(tcell.ColorReset)
@@ -139,10 +143,14 @@ func addResults(view *tview.Flex) {
 		if selectedListStyle == listStyleLong {
 			label = dir.Path
 		}
+		//label := result.Str
 
 		space := " "
 		if i == cursorPos {
 			space = ">"
+			label = color.HEX("#424242", true).Sprintf(" %s ", label)
+		} else {
+			label = fmt.Sprintf(" %s", label)
 		}
 
 		space = color.HEX("#424242", true).
@@ -150,7 +158,7 @@ func addResults(view *tview.Flex) {
 
 		colorize(
 			line,
-			color.BgDefault.Sprintf("%s %s", space, label),
+			color.BgDefault.Sprintf("%s%s", space, label),
 		)
 
 		view.AddItem(line, 1, 1, false)
