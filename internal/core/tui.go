@@ -5,27 +5,12 @@ import (
 	"github.com/jroimartin/gocui"
 	"github.com/logrusorgru/aurora/v3"
 	"io"
-	"sync"
 	"time"
 )
 
 type listStyle int
 
-var (
-	done               = make(chan struct{})
-	tuiWg              sync.WaitGroup
-	tickerTimeInterval = time.Millisecond * 100
-
-	mainFrameID = "mainJumperFrame"
-
-	cursorPos = 0
-
-	listStyleShort    listStyle = 0
-	listStyleLong     listStyle = 1
-	selectedListStyle           = listStyleShort
-)
-
-func tui() error {
+func _tui() error {
 	g, err := gocui.NewGui(gocui.Output256)
 	if err != nil {
 		return err
