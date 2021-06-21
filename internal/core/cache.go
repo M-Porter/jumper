@@ -12,8 +12,8 @@ var (
 	cacheOpenFileOptions             = os.O_RDWR | os.O_CREATE | os.O_TRUNC
 	cacheOpenFileMode    os.FileMode = 0666
 
-	// one week cache
-	staleCacheTime = time.Hour * 168
+	// one day cache
+	staleCacheTime = time.Hour * 24
 )
 
 type Cache struct {

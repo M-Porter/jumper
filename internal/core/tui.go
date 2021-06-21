@@ -5,7 +5,6 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/gookit/color"
 	"github.com/rivo/tview"
-	"sync"
 	"time"
 )
 
@@ -15,10 +14,7 @@ var (
 	searchVal = ""
 
 	done               = make(chan struct{})
-	tuiWg              sync.WaitGroup
 	tickerTimeInterval = time.Millisecond * 10
-
-	mainFrameID = "mainJumperFrame"
 
 	cursorPos       = 0
 	resultsListMaxH = 0
