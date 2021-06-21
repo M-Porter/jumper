@@ -42,6 +42,12 @@ func tui() error {
 
 	app.SetInputCapture(tuiKeyCapture)
 
+	// see https://github.com/rivo/tview/issues/270#issuecomment-485083503
+	app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
+		screen.Clear()
+		return false
+	})
+
 	return app.SetRoot(flex, true).EnableMouse(false).Run()
 }
 
@@ -130,20 +136,20 @@ func resultsViewUpdater(app *tview.Application, view *tview.Flex) {
 }
 
 func addResults(view *tview.Flex) {
-	//results := filterDirectories(rt.Directories, searchVal)
+	results := filterDirectories(rt.Directories, searchVal)
 
-	for i, dir := range rt.Directories {
-		//for i, result := range results {
+	//for i, dir := range rt.Directories {
+	for i, result := range results {
 		line := tview.NewTextView()
 		line.SetBackgroundColor(tcell.ColorReset)
 		line.SetTextColor(tcell.ColorReset)
 		line.SetDynamicColors(true)
 
-		label := dir.Label
-		if selectedListStyle == listStyleLong {
-			label = dir.Path
-		}
-		//label := result.Str
+		//label := dir.Label
+		//if selectedListStyle == listStyleLong {
+		//	label = dir.Path
+		//}
+		label := result.Str
 
 		space := " "
 		if i == cursorPos {
