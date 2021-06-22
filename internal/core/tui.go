@@ -134,8 +134,12 @@ func (t *TUI) moveCursorPosUp() {
 }
 
 func (t *TUI) moveCursorPosDown() {
+	listLen := len(t.State.ListItems) - 1
 	dirCount := len(t.App.Directories) - 1
-	if t.State.CursorPos >= dirCount {
+
+	if t.State.CursorPos >= listLen {
+		t.State.CursorPos = listLen
+	} else if t.State.CursorPos >= dirCount {
 		t.State.CursorPos = dirCount
 	} else {
 		if t.State.CursorPos >= t.State.ResultsListMaxH {
