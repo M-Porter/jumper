@@ -10,9 +10,10 @@ import (
 )
 
 type TUIState struct {
-	SearchVal string
-	CursorPos int
-	ListStyle listStyle
+	SearchVal       string
+	CursorPos       int
+	ListStyle       listStyle
+	ResultsListMaxH int
 }
 
 type TUI struct {
@@ -32,9 +33,10 @@ func NewTUI(app *Application) *TUI {
 		Done:   make(chan struct{}),
 
 		State: &TUIState{
-			SearchVal: "",
-			CursorPos: 0,
-			ListStyle: listStyleShort,
+			SearchVal:       "",
+			CursorPos:       0,
+			ListStyle:       listStyleShort,
+			ResultsListMaxH: 0,
 		},
 	}
 
@@ -88,7 +90,7 @@ func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
 
 	// print out selected row on enter press
 	if event.Key() == tcell.KeyEnter {
-		fmt.Print(app.Directories[t.State.CursorPos])
+		fmt.Print(t.App.Directories[t.State.CursorPos])
 		close(t.Done)
 	}
 
@@ -116,8 +118,8 @@ func (t *TUI) moveCursorPosDown() {
 	if t.State.CursorPos >= dirCount {
 		t.State.CursorPos = dirCount
 	} else {
-		if t.State.CursorPos >= resultsListMaxH {
-			t.State.CursorPos = resultsListMaxH - 1
+		if t.State.CursorPos >= t.State.ResultsListMaxH {
+			t.State.CursorPos = t.State.ResultsListMaxH - 1
 		} else {
 			t.State.CursorPos++
 		}
@@ -134,7 +136,9 @@ func (t *TUI) resultsViewUpdater(view *tview.Flex) {
 			t.Stop()
 			return
 		case <-t.Ticker.C:
-			_, _, _, resultsListMaxH = view.GetInnerRect()
+			_, _, _, height := view.GetInnerRect()
+			t.State.ResultsListMaxH = height
+
 			t.Screen.QueueUpdateDraw(func() {
 				view.Clear()
 				t.addResults(view)
@@ -144,7 +148,7 @@ func (t *TUI) resultsViewUpdater(view *tview.Flex) {
 }
 
 func (t *TUI) addResults(view *tview.Flex) {
-	results := filterDirectories(app.Directories, t.State.SearchVal)
+	results := filterDirectories(t.App.Directories, t.State.SearchVal)
 
 	//for i, dir := range app.Directories {
 	for i, result := range results {

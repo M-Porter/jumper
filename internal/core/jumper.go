@@ -4,10 +4,6 @@ import "time"
 
 type listStyle int
 
-var (
-	resultsListMaxH = 0
-)
-
 const (
 	tickerTimeInterval = time.Millisecond * 10
 
@@ -16,7 +12,7 @@ const (
 )
 
 func Run(args []string) error {
-	app = &Application{Directories: []string{}}
+	app := NewApp()
 	go app.Setup()
 	tui := NewTUI(app)
 	return tui.Run()

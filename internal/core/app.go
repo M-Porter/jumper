@@ -9,8 +9,6 @@ type Application struct {
 	Directories []string
 }
 
-var app *Application
-
 func (a *Application) Setup() {
 	isStale, err := isCacheStale(Config.cacheFileFullPath)
 	if os.IsNotExist(err) {
@@ -26,4 +24,8 @@ func (a *Application) Setup() {
 	if c != nil {
 		a.Directories = c.Directories
 	}
+}
+
+func NewApp() *Application {
+	return &Application{Directories: []string{}}
 }
