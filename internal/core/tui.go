@@ -9,6 +9,13 @@ import (
 	"time"
 )
 
+var (
+	ColorBgDefault = color.BgDefault
+	ColorBgGray    = color.HEX("#424242", true)
+	ColorFgRed     = color.HEX("#E53935")
+	ColorFgBlue    = color.HEX("#60A5FA")
+)
+
 type TUIState struct {
 	SearchVal       string
 	CursorPos       int
@@ -171,18 +178,13 @@ func (t *TUI) addResults(view *tview.Flex) {
 		space := " "
 		if i == t.State.CursorPos {
 			space = ">"
-			label = color.HEX("#424242", true).Sprintf(" %s ", label)
+			label = ColorBgGray.Sprintf(" %s ", label)
 		} else {
 			label = fmt.Sprintf(" %s", label)
 		}
 
-		space = color.HEX("#424242", true).
-			Sprintf("%s", color.HEX("#E53935").Sprint(space))
-
-		colorize(
-			line,
-			color.BgDefault.Sprintf("%s%s", space, label),
-		)
+		space = ColorBgGray.Sprintf("%s", ColorFgRed.Sprint(space))
+		colorize(line, ColorBgDefault.Sprintf("%s%s", space, label))
 
 		view.AddItem(line, 1, 1, false)
 	}
@@ -192,7 +194,7 @@ func (t *TUI) inputView() *tview.InputField {
 	in := tview.NewInputField().
 		SetLabel("> ").
 		SetFieldBackgroundColor(tcell.ColorReset).
-		SetLabelColor(tcell.ColorBlue).
+		SetLabelColor(ctoc(ColorFgBlue)).
 		SetChangedFunc(func(text string) {
 			t.State.SearchVal = text
 		})
@@ -205,4 +207,9 @@ func (t *TUI) inputView() *tview.InputField {
 
 func colorize(v io.Writer, text string) {
 	_, _ = tview.ANSIWriter(v).Write([]byte(text))
+}
+
+func ctoc(c color.RGBColor) tcell.Color {
+	v := c.Values()
+	return tcell.NewRGBColor(int32(v[0]), int32(v[1]), int32(v[2]))
 }
