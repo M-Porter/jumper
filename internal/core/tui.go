@@ -8,50 +8,56 @@ import (
 	"time"
 )
 
-type listStyle int
-
-var (
-	searchVal = ""
-
-	done               = make(chan struct{})
-	tickerTimeInterval = time.Millisecond * 10
-
-	cursorPos       = 0
-	resultsListMaxH = 0
-
-	listStyleShort    listStyle = 0
-	listStyleLong     listStyle = 1
-	selectedListStyle           = listStyleShort
-)
-
-func colorize(view *tview.TextView, text string) {
-	w := tview.ANSIWriter(view)
-	_, _ = w.Write([]byte(text))
+type TUI struct {
+	App       *Application
+	Screen    *tview.Application
+	CursorPos int
+	Ticker    *time.Ticker
+	Done      chan struct{}
 }
 
-func tui() error {
-	tuiApp := tview.NewApplication()
+func NewTUI(app *Application) *TUI {
+	tui := &TUI{
+		App:       app,
+		Screen:    tview.NewApplication(),
+		CursorPos: 0,
+		Ticker:    time.NewTicker(tickerTimeInterval),
+		Done:      make(chan struct{}),
+	}
 
+	defer tui.Screen.Stop()
+
+	return tui
+}
+
+func (t *TUI) Run() error {
 	resultsView := tview.NewFlex()
-	go resultsViewUpdater(tuiApp, resultsView)
+	go t.resultsViewUpdater(resultsView)
 
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
 	flex.AddItem(inputView(), 1, 1, true)
 	flex.AddItem(resultsView, 0, 1, false)
 
-	tuiApp.SetInputCapture(tuiKeyCapture)
+	t.Screen.SetInputCapture(t.tuiKeyCapture)
 
 	// see https://github.com/rivo/tview/issues/270#issuecomment-485083503
-	tuiApp.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
-		screen.Clear()
-		return false
-	})
+	t.Screen.SetBeforeDrawFunc(t.beforeDrawFunc)
 
-	return tuiApp.SetRoot(flex, true).EnableMouse(false).Run()
+	return t.Screen.SetRoot(flex, true).EnableMouse(false).Run()
 }
 
-func tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
+func (t *TUI) Stop() {
+	t.Ticker.Stop()
+	t.Screen.Stop()
+}
+
+func (*TUI) beforeDrawFunc(screen tcell.Screen) bool {
+	screen.Clear()
+	return false
+}
+
+func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
 	// tab to flip between list styles
 	if event.Key() == tcell.KeyTab {
 		selectedListStyle = 1 - selectedListStyle
@@ -60,82 +66,67 @@ func tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
 	// exit out
 	if event.Key() == tcell.KeyCtrlC || event.Key() == tcell.KeyEscape {
 		fmt.Print(".")
-		close(done)
+		close(t.Done)
 	}
 
 	// print out selected row on enter press
 	if event.Key() == tcell.KeyEnter {
-		fmt.Print(app.Directories[cursorPos])
-		close(done)
+		fmt.Print(app.Directories[t.CursorPos])
+		close(t.Done)
 	}
 
 	// move cursor around
 	if event.Key() == tcell.KeyUp {
-		moveCursorPosUp()
+		t.moveCursorPosUp()
 	}
 	if event.Key() == tcell.KeyDown {
-		moveCursorPosDown()
+		t.moveCursorPosDown()
 	}
 
 	return event
 }
 
-func moveCursorPosUp() {
-	if cursorPos <= 0 {
-		cursorPos = 0
+func (t *TUI) moveCursorPosUp() {
+	if t.CursorPos <= 0 {
+		t.CursorPos = 0
 	} else {
-		cursorPos--
+		t.CursorPos--
 	}
 }
 
-func moveCursorPosDown() {
-	dirCount := len(app.Directories) - 1
-	if cursorPos >= dirCount {
-		cursorPos = dirCount
+func (t *TUI) moveCursorPosDown() {
+	dirCount := len(t.App.Directories) - 1
+	if t.CursorPos >= dirCount {
+		t.CursorPos = dirCount
 	} else {
-		if cursorPos >= resultsListMaxH {
-			cursorPos = resultsListMaxH - 1
+		if t.CursorPos >= resultsListMaxH {
+			t.CursorPos = resultsListMaxH - 1
 		} else {
-			cursorPos++
+			t.CursorPos++
 		}
 	}
 }
 
-func inputView() *tview.InputField {
-	in := tview.NewInputField().
-		SetLabel("> ").
-		SetFieldBackgroundColor(tcell.ColorReset).
-		SetLabelColor(tcell.ColorBlue).
-		SetChangedFunc(func(text string) {
-			searchVal = text
-		})
-	in.SetBackgroundColor(tcell.ColorReset)
-	in.SetFieldTextColor(tcell.ColorReset)
-	return in
-}
-
-func resultsViewUpdater(app *tview.Application, view *tview.Flex) {
+func (t *TUI) resultsViewUpdater(view *tview.Flex) {
 	view.SetDirection(tview.FlexRow)
 	view.SetBackgroundColor(tcell.ColorReset)
 
-	ticker := time.NewTicker(tickerTimeInterval)
 	for {
 		select {
-		case <-done:
-			ticker.Stop()
-			app.Stop()
+		case <-t.Done:
+			t.Stop()
 			return
-		case <-ticker.C:
+		case <-t.Ticker.C:
 			_, _, _, resultsListMaxH = view.GetInnerRect()
-			app.QueueUpdateDraw(func() {
+			t.Screen.QueueUpdateDraw(func() {
 				view.Clear()
-				addResults(view)
+				t.addResults(view)
 			})
 		}
 	}
 }
 
-func addResults(view *tview.Flex) {
+func (t *TUI) addResults(view *tview.Flex) {
 	results := filterDirectories(app.Directories, searchVal)
 
 	//for i, dir := range app.Directories {
@@ -152,7 +143,7 @@ func addResults(view *tview.Flex) {
 		label := result.Str
 
 		space := " "
-		if i == cursorPos {
+		if i == t.CursorPos {
 			space = ">"
 			label = color.HEX("#424242", true).Sprintf(" %s ", label)
 		} else {
@@ -169,4 +160,22 @@ func addResults(view *tview.Flex) {
 
 		view.AddItem(line, 1, 1, false)
 	}
+}
+
+func inputView() *tview.InputField {
+	in := tview.NewInputField().
+		SetLabel("> ").
+		SetFieldBackgroundColor(tcell.ColorReset).
+		SetLabelColor(tcell.ColorBlue).
+		SetChangedFunc(func(text string) {
+			searchVal = text
+		})
+	in.SetBackgroundColor(tcell.ColorReset)
+	in.SetFieldTextColor(tcell.ColorReset)
+	return in
+}
+
+func colorize(view *tview.TextView, text string) {
+	w := tview.ANSIWriter(view)
+	_, _ = w.Write([]byte(text))
 }
