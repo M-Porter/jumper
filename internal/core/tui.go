@@ -25,7 +25,7 @@ type TUI struct {
 }
 
 func NewTUI(app *Application) *TUI {
-	tui := &TUI{
+	return &TUI{
 		App:    app,
 		Screen: tview.NewApplication(),
 
@@ -39,10 +39,6 @@ func NewTUI(app *Application) *TUI {
 			ResultsListMaxH: 0,
 		},
 	}
-
-	defer tui.Screen.Stop()
-
-	return tui
 }
 
 func (t *TUI) Run() error {
@@ -59,6 +55,7 @@ func (t *TUI) Run() error {
 	// see https://github.com/rivo/tview/issues/270#issuecomment-485083503
 	t.Screen.SetBeforeDrawFunc(t.beforeDrawFunc)
 
+	defer t.Screen.Stop()
 	return t.Screen.SetRoot(flex, true).EnableMouse(false).Run()
 }
 
