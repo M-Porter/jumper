@@ -30,25 +30,25 @@ func colorize(view *tview.TextView, text string) {
 }
 
 func tui() error {
-	app := tview.NewApplication()
+	tuiApp := tview.NewApplication()
 
 	resultsView := tview.NewFlex()
-	go resultsViewUpdater(app, resultsView)
+	go resultsViewUpdater(tuiApp, resultsView)
 
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
 	flex.AddItem(inputView(), 1, 1, true)
 	flex.AddItem(resultsView, 0, 1, false)
 
-	app.SetInputCapture(tuiKeyCapture)
+	tuiApp.SetInputCapture(tuiKeyCapture)
 
 	// see https://github.com/rivo/tview/issues/270#issuecomment-485083503
-	app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
+	tuiApp.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
 		screen.Clear()
 		return false
 	})
 
-	return app.SetRoot(flex, true).EnableMouse(false).Run()
+	return tuiApp.SetRoot(flex, true).EnableMouse(false).Run()
 }
 
 func tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
@@ -65,7 +65,7 @@ func tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
 
 	// print out selected row on enter press
 	if event.Key() == tcell.KeyEnter {
-		fmt.Print(rt.Directories[cursorPos].Path)
+		fmt.Print(app.Directories[cursorPos])
 		close(done)
 	}
 
@@ -89,7 +89,7 @@ func moveCursorPosUp() {
 }
 
 func moveCursorPosDown() {
-	dirCount := len(rt.Directories) - 1
+	dirCount := len(app.Directories) - 1
 	if cursorPos >= dirCount {
 		cursorPos = dirCount
 	} else {
@@ -136,9 +136,9 @@ func resultsViewUpdater(app *tview.Application, view *tview.Flex) {
 }
 
 func addResults(view *tview.Flex) {
-	results := filterDirectories(rt.Directories, searchVal)
+	results := filterDirectories(app.Directories, searchVal)
 
-	//for i, dir := range rt.Directories {
+	//for i, dir := range app.Directories {
 	for i, result := range results {
 		line := tview.NewTextView()
 		line.SetBackgroundColor(tcell.ColorReset)
