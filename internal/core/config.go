@@ -8,13 +8,15 @@ import (
 	"path/filepath"
 )
 
-var (
-	ConfigDir      = ".core"
-	ConfigFilename = "config"
-	ConfigType     = "yml"
+const (
+	ConfigDir        = ".core"
+	ConfigFilename   = "config"
+	ConfigType       = "yml"
+	DefaultCacheFile = "cache"
+)
 
-	defaultCacheFile = "cache"
-	defaultIncludes  = []string{
+var (
+	defaultIncludes = []string{
 		"development/",
 		"dev/",
 		"xcode-projects/",
@@ -54,7 +56,7 @@ func Init() {
 	viper.SetConfigName(ConfigFilename)
 	viper.SetConfigType(ConfigType)
 
-	viper.SetDefault("cache_file", defaultCacheFile)
+	viper.SetDefault("cache_file", DefaultCacheFile)
 	viper.SetDefault("search_includes", defaultIncludes)
 	viper.SetDefault("search_excludes", defaultExcludes)
 

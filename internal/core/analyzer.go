@@ -10,7 +10,9 @@ import (
 	"sync"
 )
 
-var pathStopRegexGit = regexp.MustCompile("/\\.git$")
+var (
+	pathStopRegexGit = regexp.MustCompile("/\\.git$")
+)
 
 func Analyze() {
 	excludeRegex := regexpJoinPartsOr(Config.SearchExcludes)

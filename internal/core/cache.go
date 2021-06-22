@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-var (
+const (
 	cacheOpenFileOptions             = os.O_RDWR | os.O_CREATE | os.O_TRUNC
 	cacheOpenFileMode    os.FileMode = 0666
 
