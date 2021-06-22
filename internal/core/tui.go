@@ -18,11 +18,9 @@ type TUIState struct {
 type TUI struct {
 	App    *Application
 	Screen *tview.Application
-
 	Ticker *time.Ticker
 	Done   chan struct{}
-
-	State *TUIState
+	State  *TUIState
 }
 
 func NewTUI(app *Application) *TUI {
@@ -51,7 +49,7 @@ func (t *TUI) Run() error {
 
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
-	flex.AddItem(inputView(), 1, 1, true)
+	flex.AddItem(t.inputView(), 1, 1, true)
 	flex.AddItem(resultsView, 0, 1, false)
 
 	t.Screen.SetInputCapture(t.tuiKeyCapture)
@@ -146,7 +144,7 @@ func (t *TUI) resultsViewUpdater(view *tview.Flex) {
 }
 
 func (t *TUI) addResults(view *tview.Flex) {
-	results := filterDirectories(app.Directories, searchVal)
+	results := filterDirectories(app.Directories, t.State.SearchVal)
 
 	//for i, dir := range app.Directories {
 	for i, result := range results {
@@ -181,13 +179,13 @@ func (t *TUI) addResults(view *tview.Flex) {
 	}
 }
 
-func inputView() *tview.InputField {
+func (t *TUI) inputView() *tview.InputField {
 	in := tview.NewInputField().
 		SetLabel("> ").
 		SetFieldBackgroundColor(tcell.ColorReset).
 		SetLabelColor(tcell.ColorBlue).
 		SetChangedFunc(func(text string) {
-			searchVal = text
+			t.State.SearchVal = text
 		})
 
 	in.SetBackgroundColor(tcell.ColorReset)
