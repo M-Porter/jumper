@@ -64,6 +64,16 @@ func (t *TUI) Stop() {
 	t.Screen.Stop()
 }
 
+func (t *TUI) ExitWithNoChange() {
+	fmt.Print(".")
+	close(t.Done)
+}
+
+func (t *TUI) ExitWithSelected() {
+	fmt.Print(t.App.Directories[t.State.CursorPos])
+	close(t.Done)
+}
+
 func (*TUI) beforeDrawFunc(screen tcell.Screen) bool {
 	screen.Clear()
 	return false
@@ -81,14 +91,12 @@ func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
 
 	// exit out
 	if event.Key() == tcell.KeyCtrlC || event.Key() == tcell.KeyEscape {
-		fmt.Print(".")
-		close(t.Done)
+		t.ExitWithNoChange()
 	}
 
 	// print out selected row on enter press
 	if event.Key() == tcell.KeyEnter {
-		fmt.Print(t.App.Directories[t.State.CursorPos])
-		close(t.Done)
+		t.ExitWithSelected()
 	}
 
 	// move cursor around
