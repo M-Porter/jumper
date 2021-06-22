@@ -10,22 +10,24 @@ import (
 
 type TUI struct {
 	App       *Application
-	screen    *tview.Application
-	cursorPos int
-	ticker    *time.Ticker
-	done      chan struct{}
+	Screen    *tview.Application
+	CursorPos int
+	Ticker    *time.Ticker
+	Done      chan struct{}
+	ListStyle listStyle
 }
 
 func NewTUI(app *Application) *TUI {
 	tui := &TUI{
 		App:       app,
-		screen:    tview.NewApplication(),
-		cursorPos: 0,
-		ticker:    time.NewTicker(tickerTimeInterval),
-		done:      make(chan struct{}),
+		Screen:    tview.NewApplication(),
+		CursorPos: 0,
+		Ticker:    time.NewTicker(tickerTimeInterval),
+		Done:      make(chan struct{}),
+		ListStyle: listStyleShort,
 	}
 
-	defer tui.screen.Stop()
+	defer tui.Screen.Stop()
 
 	return tui
 }
@@ -39,17 +41,17 @@ func (t *TUI) Run() error {
 	flex.AddItem(inputView(), 1, 1, true)
 	flex.AddItem(resultsView, 0, 1, false)
 
-	t.screen.SetInputCapture(t.tuiKeyCapture)
+	t.Screen.SetInputCapture(t.tuiKeyCapture)
 
 	// see https://github.com/rivo/tview/issues/270#issuecomment-485083503
-	t.screen.SetBeforeDrawFunc(t.beforeDrawFunc)
+	t.Screen.SetBeforeDrawFunc(t.beforeDrawFunc)
 
-	return t.screen.SetRoot(flex, true).EnableMouse(false).Run()
+	return t.Screen.SetRoot(flex, true).EnableMouse(false).Run()
 }
 
 func (t *TUI) Stop() {
-	t.ticker.Stop()
-	t.screen.Stop()
+	t.Ticker.Stop()
+	t.Screen.Stop()
 }
 
 func (*TUI) beforeDrawFunc(screen tcell.Screen) bool {
@@ -57,22 +59,26 @@ func (*TUI) beforeDrawFunc(screen tcell.Screen) bool {
 	return false
 }
 
+func (t *TUI) toggleListStyle() {
+	t.ListStyle = 1 - t.ListStyle
+}
+
 func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
 	// tab to flip between list styles
 	if event.Key() == tcell.KeyTab {
-		selectedListStyle = 1 - selectedListStyle
+		t.toggleListStyle()
 	}
 
 	// exit out
 	if event.Key() == tcell.KeyCtrlC || event.Key() == tcell.KeyEscape {
 		fmt.Print(".")
-		close(t.done)
+		close(t.Done)
 	}
 
 	// print out selected row on enter press
 	if event.Key() == tcell.KeyEnter {
-		fmt.Print(app.Directories[t.cursorPos])
-		close(t.done)
+		fmt.Print(app.Directories[t.CursorPos])
+		close(t.Done)
 	}
 
 	// move cursor around
@@ -87,22 +93,22 @@ func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func (t *TUI) moveCursorPosUp() {
-	if t.cursorPos <= 0 {
-		t.cursorPos = 0
+	if t.CursorPos <= 0 {
+		t.CursorPos = 0
 	} else {
-		t.cursorPos--
+		t.CursorPos--
 	}
 }
 
 func (t *TUI) moveCursorPosDown() {
 	dirCount := len(t.App.Directories) - 1
-	if t.cursorPos >= dirCount {
-		t.cursorPos = dirCount
+	if t.CursorPos >= dirCount {
+		t.CursorPos = dirCount
 	} else {
-		if t.cursorPos >= resultsListMaxH {
-			t.cursorPos = resultsListMaxH - 1
+		if t.CursorPos >= resultsListMaxH {
+			t.CursorPos = resultsListMaxH - 1
 		} else {
-			t.cursorPos++
+			t.CursorPos++
 		}
 	}
 }
@@ -113,12 +119,12 @@ func (t *TUI) resultsViewUpdater(view *tview.Flex) {
 
 	for {
 		select {
-		case <-t.done:
+		case <-t.Done:
 			t.Stop()
 			return
-		case <-t.ticker.C:
+		case <-t.Ticker.C:
 			_, _, _, resultsListMaxH = view.GetInnerRect()
-			t.screen.QueueUpdateDraw(func() {
+			t.Screen.QueueUpdateDraw(func() {
 				view.Clear()
 				t.addResults(view)
 			})
@@ -137,13 +143,13 @@ func (t *TUI) addResults(view *tview.Flex) {
 		line.SetDynamicColors(true)
 
 		//label := dir.Label
-		//if selectedListStyle == listStyleLong {
+		//if ListStyle == listStyleLong {
 		//	label = dir.Path
 		//}
 		label := result.Str
 
 		space := " "
-		if i == t.cursorPos {
+		if i == t.CursorPos {
 			space = ">"
 			label = color.HEX("#424242", true).Sprintf(" %s ", label)
 		} else {
@@ -170,8 +176,10 @@ func inputView() *tview.InputField {
 		SetChangedFunc(func(text string) {
 			searchVal = text
 		})
+
 	in.SetBackgroundColor(tcell.ColorReset)
 	in.SetFieldTextColor(tcell.ColorReset)
+
 	return in
 }
 
