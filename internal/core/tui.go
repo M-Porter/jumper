@@ -6,6 +6,7 @@ import (
 	"github.com/gookit/color"
 	"github.com/rivo/tview"
 	"io"
+	"path/filepath"
 	"time"
 )
 
@@ -17,10 +18,11 @@ var (
 )
 
 type TUIState struct {
-	SearchVal       string
-	CursorPos       int
-	ListStyle       listStyle
-	ResultsListMaxH int
+	CursorPos         int
+	ListStyle         listStyle
+	ResultsListMaxH   int
+	ListItems         []ListItem
+	ListLastUpdatedAt int64
 }
 
 type TUI struct {
@@ -40,10 +42,11 @@ func NewTUI(app *Application) *TUI {
 		Done:   make(chan struct{}),
 
 		State: &TUIState{
-			SearchVal:       "",
-			CursorPos:       0,
-			ListStyle:       listStyleShort,
-			ResultsListMaxH: 0,
+			CursorPos:         0,
+			ListStyle:         listStyleShort,
+			ResultsListMaxH:   0,
+			ListItems:         []ListItem{},
+			ListLastUpdatedAt: 0,
 		},
 	}
 }
@@ -87,7 +90,12 @@ func (*TUI) beforeDrawFunc(screen tcell.Screen) bool {
 }
 
 func (t *TUI) toggleListStyle() {
-	t.State.ListStyle = 1 - t.State.ListStyle
+	next := int(t.State.ListStyle) + 1
+	if next < len(listStyles) {
+		t.State.ListStyle = listStyles[next]
+	} else {
+		t.State.ListStyle = listStyles[0]
+	}
 }
 
 func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
@@ -160,20 +168,18 @@ func (t *TUI) resultsViewUpdater(view *tview.Flex) {
 }
 
 func (t *TUI) addResults(view *tview.Flex) {
-	results := filterDirectories(t.App.Directories, t.State.SearchVal)
+	if t.State.ListLastUpdatedAt == 0 {
+		t.State.ListItems = pathsToListItems(t.App.Directories)
+		t.State.ListLastUpdatedAt = time.Now().UnixNano()
+	}
 
-	//for i, dir := range app.Directories {
-	for i, result := range results {
+	for i, item := range t.State.ListItems {
 		line := tview.NewTextView()
 		line.SetBackgroundColor(tcell.ColorReset)
 		line.SetTextColor(tcell.ColorReset)
 		line.SetDynamicColors(true)
 
-		//label := dir.Label
-		//if ListStyle == listStyleLong {
-		//	label = dir.Path
-		//}
-		label := result.Str
+		label := item.LabelForStyle(t.State.ListStyle)
 
 		space := " "
 		if i == t.State.CursorPos {
@@ -190,13 +196,28 @@ func (t *TUI) addResults(view *tview.Flex) {
 	}
 }
 
+func (t *TUI) doSearch(text string) {
+	var results []string
+	if text == "" {
+		results = t.App.Directories
+	} else {
+		results = filterDirectories(t.App.Directories, text)
+	}
+
+	now := time.Now().UnixNano()
+	if now > t.State.ListLastUpdatedAt {
+		t.State.ListItems = pathsToListItems(results)
+		t.State.ListLastUpdatedAt = now
+	}
+}
+
 func (t *TUI) inputView() *tview.InputField {
 	in := tview.NewInputField().
 		SetLabel("> ").
 		SetFieldBackgroundColor(tcell.ColorReset).
 		SetLabelColor(ctoc(ColorFgBlue)).
 		SetChangedFunc(func(text string) {
-			t.State.SearchVal = text
+			go t.doSearch(text)
 		})
 
 	in.SetBackgroundColor(tcell.ColorReset)
@@ -212,4 +233,35 @@ func colorize(v io.Writer, text string) {
 func ctoc(c color.RGBColor) tcell.Color {
 	v := c.Values()
 	return tcell.NewRGBColor(int32(v[0]), int32(v[1]), int32(v[2]))
+}
+
+func pathsToListItems(paths []string) []ListItem {
+	var r []ListItem
+	for _, path := range paths {
+		r = append(r, ListItem{
+			Path: path,
+			Base: filepath.Base(path),
+			Dir:  filepath.Dir(path),
+		})
+	}
+	return r
+}
+
+type ListItem struct {
+	Path string
+	Base string
+	Dir  string
+}
+
+func (li *ListItem) LabelForStyle(style listStyle) string {
+	switch style {
+	case listStyleDetailed:
+		return fmt.Sprintf("%s (%s)", li.Base, li.Dir)
+	case listStyleLong:
+		return li.Path
+	case listStyleShort:
+		fallthrough
+	default:
+		return li.Base
+	}
 }

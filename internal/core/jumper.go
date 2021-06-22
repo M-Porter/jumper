@@ -2,13 +2,18 @@ package core
 
 import "time"
 
-type listStyle int
+type listStyle uint8
 
 const (
 	tickerTimeInterval = time.Millisecond * 10
 
-	listStyleShort listStyle = 0
-	listStyleLong  listStyle = 1
+	listStyleShort    listStyle = 0
+	listStyleLong     listStyle = 1
+	listStyleDetailed listStyle = 2
+)
+
+var (
+	listStyles = []listStyle{listStyleShort, listStyleLong, listStyleDetailed}
 )
 
 func Run(args []string) error {
