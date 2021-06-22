@@ -10,22 +10,22 @@ import (
 
 type TUI struct {
 	App       *Application
-	Screen    *tview.Application
-	CursorPos int
-	Ticker    *time.Ticker
-	Done      chan struct{}
+	screen    *tview.Application
+	cursorPos int
+	ticker    *time.Ticker
+	done      chan struct{}
 }
 
 func NewTUI(app *Application) *TUI {
 	tui := &TUI{
 		App:       app,
-		Screen:    tview.NewApplication(),
-		CursorPos: 0,
-		Ticker:    time.NewTicker(tickerTimeInterval),
-		Done:      make(chan struct{}),
+		screen:    tview.NewApplication(),
+		cursorPos: 0,
+		ticker:    time.NewTicker(tickerTimeInterval),
+		done:      make(chan struct{}),
 	}
 
-	defer tui.Screen.Stop()
+	defer tui.screen.Stop()
 
 	return tui
 }
@@ -39,17 +39,17 @@ func (t *TUI) Run() error {
 	flex.AddItem(inputView(), 1, 1, true)
 	flex.AddItem(resultsView, 0, 1, false)
 
-	t.Screen.SetInputCapture(t.tuiKeyCapture)
+	t.screen.SetInputCapture(t.tuiKeyCapture)
 
 	// see https://github.com/rivo/tview/issues/270#issuecomment-485083503
-	t.Screen.SetBeforeDrawFunc(t.beforeDrawFunc)
+	t.screen.SetBeforeDrawFunc(t.beforeDrawFunc)
 
-	return t.Screen.SetRoot(flex, true).EnableMouse(false).Run()
+	return t.screen.SetRoot(flex, true).EnableMouse(false).Run()
 }
 
 func (t *TUI) Stop() {
-	t.Ticker.Stop()
-	t.Screen.Stop()
+	t.ticker.Stop()
+	t.screen.Stop()
 }
 
 func (*TUI) beforeDrawFunc(screen tcell.Screen) bool {
@@ -66,13 +66,13 @@ func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
 	// exit out
 	if event.Key() == tcell.KeyCtrlC || event.Key() == tcell.KeyEscape {
 		fmt.Print(".")
-		close(t.Done)
+		close(t.done)
 	}
 
 	// print out selected row on enter press
 	if event.Key() == tcell.KeyEnter {
-		fmt.Print(app.Directories[t.CursorPos])
-		close(t.Done)
+		fmt.Print(app.Directories[t.cursorPos])
+		close(t.done)
 	}
 
 	// move cursor around
@@ -87,22 +87,22 @@ func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func (t *TUI) moveCursorPosUp() {
-	if t.CursorPos <= 0 {
-		t.CursorPos = 0
+	if t.cursorPos <= 0 {
+		t.cursorPos = 0
 	} else {
-		t.CursorPos--
+		t.cursorPos--
 	}
 }
 
 func (t *TUI) moveCursorPosDown() {
 	dirCount := len(t.App.Directories) - 1
-	if t.CursorPos >= dirCount {
-		t.CursorPos = dirCount
+	if t.cursorPos >= dirCount {
+		t.cursorPos = dirCount
 	} else {
-		if t.CursorPos >= resultsListMaxH {
-			t.CursorPos = resultsListMaxH - 1
+		if t.cursorPos >= resultsListMaxH {
+			t.cursorPos = resultsListMaxH - 1
 		} else {
-			t.CursorPos++
+			t.cursorPos++
 		}
 	}
 }
@@ -113,12 +113,12 @@ func (t *TUI) resultsViewUpdater(view *tview.Flex) {
 
 	for {
 		select {
-		case <-t.Done:
+		case <-t.done:
 			t.Stop()
 			return
-		case <-t.Ticker.C:
+		case <-t.ticker.C:
 			_, _, _, resultsListMaxH = view.GetInnerRect()
-			t.Screen.QueueUpdateDraw(func() {
+			t.screen.QueueUpdateDraw(func() {
 				view.Clear()
 				t.addResults(view)
 			})
@@ -143,7 +143,7 @@ func (t *TUI) addResults(view *tview.Flex) {
 		label := result.Str
 
 		space := " "
-		if i == t.CursorPos {
+		if i == t.cursorPos {
 			space = ">"
 			label = color.HEX("#424242", true).Sprintf(" %s ", label)
 		} else {
