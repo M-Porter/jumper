@@ -5,26 +5,39 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/gookit/color"
 	"github.com/rivo/tview"
+	"io"
 	"time"
 )
 
-type TUI struct {
-	App       *Application
-	Screen    *tview.Application
+type TUIState struct {
+	SearchVal string
 	CursorPos int
-	Ticker    *time.Ticker
-	Done      chan struct{}
 	ListStyle listStyle
+}
+
+type TUI struct {
+	App    *Application
+	Screen *tview.Application
+
+	Ticker *time.Ticker
+	Done   chan struct{}
+
+	State *TUIState
 }
 
 func NewTUI(app *Application) *TUI {
 	tui := &TUI{
-		App:       app,
-		Screen:    tview.NewApplication(),
-		CursorPos: 0,
-		Ticker:    time.NewTicker(tickerTimeInterval),
-		Done:      make(chan struct{}),
-		ListStyle: listStyleShort,
+		App:    app,
+		Screen: tview.NewApplication(),
+
+		Ticker: time.NewTicker(tickerTimeInterval),
+		Done:   make(chan struct{}),
+
+		State: &TUIState{
+			SearchVal: "",
+			CursorPos: 0,
+			ListStyle: listStyleShort,
+		},
 	}
 
 	defer tui.Screen.Stop()
@@ -60,7 +73,7 @@ func (*TUI) beforeDrawFunc(screen tcell.Screen) bool {
 }
 
 func (t *TUI) toggleListStyle() {
-	t.ListStyle = 1 - t.ListStyle
+	t.State.ListStyle = 1 - t.State.ListStyle
 }
 
 func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
@@ -77,7 +90,7 @@ func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
 
 	// print out selected row on enter press
 	if event.Key() == tcell.KeyEnter {
-		fmt.Print(app.Directories[t.CursorPos])
+		fmt.Print(app.Directories[t.State.CursorPos])
 		close(t.Done)
 	}
 
@@ -93,22 +106,22 @@ func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func (t *TUI) moveCursorPosUp() {
-	if t.CursorPos <= 0 {
-		t.CursorPos = 0
+	if t.State.CursorPos <= 0 {
+		t.State.CursorPos = 0
 	} else {
-		t.CursorPos--
+		t.State.CursorPos--
 	}
 }
 
 func (t *TUI) moveCursorPosDown() {
 	dirCount := len(t.App.Directories) - 1
-	if t.CursorPos >= dirCount {
-		t.CursorPos = dirCount
+	if t.State.CursorPos >= dirCount {
+		t.State.CursorPos = dirCount
 	} else {
-		if t.CursorPos >= resultsListMaxH {
-			t.CursorPos = resultsListMaxH - 1
+		if t.State.CursorPos >= resultsListMaxH {
+			t.State.CursorPos = resultsListMaxH - 1
 		} else {
-			t.CursorPos++
+			t.State.CursorPos++
 		}
 	}
 }
@@ -149,7 +162,7 @@ func (t *TUI) addResults(view *tview.Flex) {
 		label := result.Str
 
 		space := " "
-		if i == t.CursorPos {
+		if i == t.State.CursorPos {
 			space = ">"
 			label = color.HEX("#424242", true).Sprintf(" %s ", label)
 		} else {
@@ -183,7 +196,6 @@ func inputView() *tview.InputField {
 	return in
 }
 
-func colorize(view *tview.TextView, text string) {
-	w := tview.ANSIWriter(view)
-	_, _ = w.Write([]byte(text))
+func colorize(v io.Writer, text string) {
+	_, _ = tview.ANSIWriter(v).Write([]byte(text))
 }
