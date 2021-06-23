@@ -18,7 +18,6 @@ var (
 
 func Run(args []string) error {
 	app := NewApp()
-	go app.Setup()
 	tui := NewTUI(app)
 	return tui.Run()
 }

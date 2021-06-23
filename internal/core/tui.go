@@ -52,6 +52,8 @@ func NewTUI(app *Application) *TUI {
 }
 
 func (t *TUI) Run() error {
+	go t.Setup()
+
 	resultsView := tview.NewFlex()
 	go t.resultsViewUpdater(resultsView)
 
@@ -67,6 +69,11 @@ func (t *TUI) Run() error {
 
 	defer t.Screen.Stop()
 	return t.Screen.SetRoot(flex, true).EnableMouse(false).Run()
+}
+
+func (t *TUI) Setup() {
+	t.App.Setup()  // setup the app
+	t.doSearch("") // fetch initial results from cache
 }
 
 func (t *TUI) Stop() {
