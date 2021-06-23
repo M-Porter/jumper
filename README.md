@@ -9,6 +9,6 @@ The most effective way to use jumper is by making a bash function which combines
 
 ```shell
 j() {
-    cd "$(jumper)"
+    cd "$(jumper to)"
 }
 ```

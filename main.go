@@ -7,26 +7,37 @@ import (
 	"os"
 )
 
-var flagAnalyze bool
-
-func execute(cmd *cobra.Command, args []string) error {
-	if flagAnalyze {
-		core.Analyze()
-		return nil
-	}
+func executeCmdTo(cmd *cobra.Command, args []string) error {
 	return core.Run(args)
+}
+
+func executeCmdAnalyze(cmd *cobra.Command, args []string) {
+	core.Analyze()
 }
 
 func main() {
 	cobra.OnInitialize(core.Init)
 
 	jumperCmd := &cobra.Command{
-		Use:   "core",
+		Use:   "jumper",
 		Short: "Seamlessly jump between projects on your machine.",
-		RunE:  execute,
 	}
 
-	jumperCmd.Flags().BoolVarP(&flagAnalyze, "analyze", "a", false, "Only run analyzer and exit")
+	toCmd := &cobra.Command{
+		Use:   "to",
+		Short: "Run the jumper TUI.",
+		RunE:  executeCmdTo,
+	}
+
+	analyzeCmd := &cobra.Command{
+		Use:   "analyze",
+		Short: "Analyze and cache projects.",
+		Run:   executeCmdAnalyze,
+	}
+
+	// todo: install cmd
+
+	jumperCmd.AddCommand(toCmd, analyzeCmd)
 
 	if err := jumperCmd.Execute(); err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
