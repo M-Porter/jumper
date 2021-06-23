@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	ConfigDir        = ".core"
+	ConfigDir        = ".jumper"
 	ConfigFilename   = "config"
 	ConfigType       = "yml"
 	DefaultCacheFile = "cache"
