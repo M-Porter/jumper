@@ -31,11 +31,24 @@ var analyzeCmd = &cobra.Command{
 	},
 }
 
+// jumper install
+var installCmd = &cobra.Command{
+	Use:   "install",
+	Short: "Install jumper helpers to your environment.",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// todo this
+		return nil
+	},
+}
+
 func main() {
 	cobra.OnInitialize(core.Init)
 
-	// todo: install cmd
-	rootCmd.AddCommand(toCmd, analyzeCmd)
+	rootCmd.AddCommand(
+		toCmd,
+		analyzeCmd,
+		installCmd,
+	)
 
 	if err := rootCmd.Execute(); err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
