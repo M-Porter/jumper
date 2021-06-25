@@ -14,7 +14,7 @@ var (
 	pathStopRegexGit = regexp.MustCompile("/\\.git$")
 )
 
-func Analyze() {
+func Analyze(runInDebugMode bool) {
 	excludeRegex := regexpJoinPartsOr(Config.SearchExcludes)
 
 	var projectDirs []string
@@ -23,7 +23,7 @@ func Analyze() {
 	wg.Add(len(Config.SearchIncludes))
 
 	for _, search := range Config.SearchIncludes {
-		fullSearch := filepath.Join(Config.homedir, search)
+		fullSearch := filepath.Join(Config.HomeDir, search)
 
 		go func(inclPath string) {
 			defer wg.Done()
@@ -66,7 +66,7 @@ func Analyze() {
 
 	wg.Wait()
 
-	err := writeToCache(Config.cacheFileFullPath, removeGitParts(projectDirs))
+	err := writeToCache(Config.CacheFileFullPath, removeGitParts(projectDirs))
 	cobra.CheckErr(err)
 }
 

@@ -7,6 +7,10 @@ import (
 	"os"
 )
 
+var (
+	runInDebugMode bool
+)
+
 // jumper
 var rootCmd = &cobra.Command{
 	Use:   "jumper",
@@ -18,7 +22,7 @@ var toCmd = &cobra.Command{
 	Use:   "to",
 	Short: "Run the jumper TUI.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return core.Run(args)
+		return core.Run(runInDebugMode)
 	},
 }
 
@@ -27,7 +31,7 @@ var analyzeCmd = &cobra.Command{
 	Use:   "analyze",
 	Short: "Analyze and cache projects.",
 	Run: func(cmd *cobra.Command, args []string) {
-		core.Analyze()
+		core.Analyze(runInDebugMode)
 	},
 }
 
@@ -43,6 +47,8 @@ var installCmd = &cobra.Command{
 
 func main() {
 	cobra.OnInitialize(core.Init)
+
+	rootCmd.PersistentFlags().BoolVar(&runInDebugMode, "debug", false, "Run jumper in debug mode.")
 
 	rootCmd.AddCommand(
 		toCmd,

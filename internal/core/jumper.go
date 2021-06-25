@@ -16,8 +16,8 @@ var (
 	listStyles = []listStyle{listStyleShort, listStyleLong, listStyleDetailed}
 )
 
-func Run(args []string) error {
-	app := NewApp()
+func Run(runInDebugMode bool) error {
+	app := NewApp(runInDebugMode)
 	tui := NewTUI(app)
 	return tui.Run()
 }
