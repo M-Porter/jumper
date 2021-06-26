@@ -62,10 +62,13 @@ func (a *Application) Analyze() {
 	var projectDirs []string
 	var wg sync.WaitGroup
 
+	counter := 0
+
 	wg.Add(len(Config.SearchIncludes))
 
 	for _, search := range Config.SearchIncludes {
 		fullSearch := filepath.Join(Config.HomeDir, search)
+		a.Log("analyzing path", zap.String("path", fullSearch))
 
 		go func(inclPath string) {
 			defer wg.Done()
@@ -73,22 +76,29 @@ func (a *Application) Analyze() {
 			// walker panics on directories that don't exist so lets make sure
 			// it does first
 			if _, err := os.Stat(inclPath); os.IsNotExist(err) {
+				a.Log("skipping directory: IsNotExist", zap.String("path", inclPath))
 				return
 			}
 
 			var mDirs []string
 
 			walkFn := func(path string, fi os.FileInfo) error {
+				counter++
+
 				if excludeRegex.MatchString(path) {
+					a.Log("directory matches excludes", zap.String("path", path))
 					return filepath.SkipDir
 				}
 
 				for _, re := range pathStops {
 					if re.MatchString(path) {
-						projectDirs = append(projectDirs, path)
-						mDirs = append(mDirs, path)
+						cleanPath := filepath.Dir(path)
+						projectDirs = append(projectDirs, cleanPath)
+						mDirs = append(mDirs, cleanPath)
 
-						// SkipDir to tell the walker to not go any further
+						a.Log("appending directory", zap.String("path", cleanPath))
+
+						//SkipDir to tell the walker to not go any further
 						return filepath.SkipDir
 					}
 				}
@@ -113,8 +123,16 @@ func (a *Application) Analyze() {
 
 	wg.Wait()
 
-	err := writeToCache(Config.CacheFileFullPath, removeGitParts(projectDirs))
+	a.Log("number of directories walked", zap.Int("count", counter))
+
+	err := writeToCache(Config.CacheFileFullPath, projectDirs)
 	cobra.CheckErr(err)
+}
+
+func (a *Application) Log(msg string, fields ...zap.Field) {
+	if a.Logger != nil {
+		a.Logger.Debug(msg, fields...)
+	}
 }
 
 func NewApp(debug bool) *Application {
@@ -125,18 +143,16 @@ func NewApp(debug bool) *Application {
 }
 
 func NewLogger(debug bool) *zap.Logger {
-	t := time.Now()
-	logFileName := fmt.Sprintf("debug_%0.4d-%0.2d-%0.2d.log", t.Year(), t.Month(), t.Day())
-	outputPath := filepath.Join(Config.HomeDir, JumperDirname, logFileName)
-
-	level := zapcore.FatalLevel
-	if debug {
-		level = zapcore.DebugLevel
+	if !debug {
+		return nil
 	}
 
-	c := zap.NewProductionConfig()
+	t := time.Now()
+	logFileName := fmt.Sprintf("%0.4d-%0.2d-%0.2d.log", t.Year(), t.Month(), t.Day())
+	outputPath := filepath.Join(Config.HomeDir, JumperDirname, logFileName)
+	c := zap.NewDevelopmentConfig()
 	c.OutputPaths = []string{outputPath}
-	c.Level = zap.NewAtomicLevelAt(level)
+	c.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
 	logger, _ := c.Build()
 	defer logger.Sync()
 	return logger

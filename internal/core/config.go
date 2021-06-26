@@ -23,12 +23,13 @@ var (
 		"repos/",
 	}
 	defaultExcludes = []string{
-		"node_modules/",
-		"bin/",
-		"temp/",
-		"tmp/",
-		".git/",
-		"vendor/",
+		"/node_modules",
+		"/bin",
+		"/temp",
+		"/tmp",
+		"/vendor",
+		"/venv",
+		"/ios/Pods",
 	}
 )
 
