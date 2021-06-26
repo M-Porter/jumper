@@ -82,17 +82,17 @@ func (a *Application) Analyze() {
 
 			var mDirs []string
 
-			walkFn := func(path string, fi os.FileInfo) error {
+			walkFn := func(p string, fi os.FileInfo) error {
 				counter++
 
-				if excludeRegex.MatchString(path) {
-					a.Log("directory matches excludes", zap.String("path", path))
+				if excludeRegex.MatchString(p) {
+					a.Log("directory matches excludes", zap.String("path", p))
 					return filepath.SkipDir
 				}
 
 				for _, re := range pathStops {
-					if re.MatchString(path) {
-						cleanPath := filepath.Dir(path)
+					if re.MatchString(p) {
+						cleanPath := filepath.Dir(p)
 						projectDirs = append(projectDirs, cleanPath)
 						mDirs = append(mDirs, cleanPath)
 
@@ -101,6 +101,11 @@ func (a *Application) Analyze() {
 						//SkipDir to tell the walker to not go any further
 						return filepath.SkipDir
 					}
+				}
+
+				if len(strings.Split(filepath.Dir(p), string(filepath.Separator))) > maxDepth {
+					//SkipDir to tell the walker to not go any further
+					return filepath.SkipDir
 				}
 
 				return nil
@@ -123,10 +128,16 @@ func (a *Application) Analyze() {
 
 	wg.Wait()
 
+	projectDirs = removeDuplicates(projectDirs)
+
 	a.Log("number of directories walked", zap.Int("count", counter))
+	a.Log("projects found", zap.Int("count", len(projectDirs)))
 
 	err := writeToCache(Config.CacheFileFullPath, projectDirs)
-	cobra.CheckErr(err)
+	if err != nil {
+		a.Log("failed writing to cache")
+		cobra.CheckErr(err)
+	}
 }
 
 func (a *Application) Log(msg string, fields ...zap.Field) {
@@ -170,10 +181,14 @@ func regexpJoinPartsOr(parts []string) *regexp.Regexp {
 	return regexp.MustCompile(strings.Join(quoteParts(parts), "|"))
 }
 
-func removeGitParts(dirs []string) []string {
+func removeDuplicates(dirs []string) []string {
+	set := make(map[string]struct{})
 	var r []string
 	for _, dir := range dirs {
-		r = append(r, strings.TrimRight(dir, "/.git"))
+		if _, ok := set[dir]; !ok {
+			r = append(r, dir)
+			set[dir] = struct{}{}
+		}
 	}
 	return r
 }
