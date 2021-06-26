@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/m-porter/jumper/internal/core"
 	"github.com/spf13/cobra"
@@ -9,6 +10,9 @@ import (
 
 var (
 	runInDebugMode bool
+
+	resetCache  bool
+	resetConfig bool
 )
 
 // jumper
@@ -35,6 +39,21 @@ var analyzeCmd = &cobra.Command{
 	},
 }
 
+// jumper clear
+var resetCmd = &cobra.Command{
+	Use:   "clear",
+	Short: "Clear the jumper cache and/or config.",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if !resetCache && !resetConfig {
+			return errors.New("--cache and/or --config flags required")
+		}
+		return nil
+	},
+	Run: func(cmd *cobra.Command, args []string) {
+		// todo this
+	},
+}
+
 // jumper install
 var installCmd = &cobra.Command{
 	Use:   "install",
@@ -50,9 +69,13 @@ func main() {
 
 	rootCmd.PersistentFlags().BoolVar(&runInDebugMode, "debug", false, "Run jumper in debug mode.")
 
+	resetCmd.Flags().BoolVar(&resetCache, "cache", false, "Reset the jumper cache.")
+	resetCmd.Flags().BoolVar(&resetConfig, "config", false, "Reset the jumper config.")
+
 	rootCmd.AddCommand(
 		toCmd,
 		analyzeCmd,
+		resetCmd,
 		installCmd,
 	)
 
