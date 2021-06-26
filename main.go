@@ -31,7 +31,7 @@ var analyzeCmd = &cobra.Command{
 	Use:   "analyze",
 	Short: "Analyze and cache projects.",
 	Run: func(cmd *cobra.Command, args []string) {
-		core.Analyze(runInDebugMode)
+		core.RunAnalyzer(runInDebugMode)
 	},
 }
 

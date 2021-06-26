@@ -2,34 +2,119 @@ package core
 
 import (
 	"fmt"
+	"github.com/saracen/walker"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
+	"sync"
 	"time"
+)
+
+var (
+	// how we determine not to go any deeper when walking
+	pathStops = []*regexp.Regexp{
+		regexp.MustCompile("/\\.git$"),
+		regexp.MustCompile("/Gemfile$"),
+		regexp.MustCompile("/package\\.json$"),
+		regexp.MustCompile("/go\\.mod$"),
+		regexp.MustCompile("/setup\\.py$"),
+		regexp.MustCompile("/pyproject\\.toml$"),
+	}
+
+	/*
+		todo: implement this
+		max depth - how far deep we attempt to go beyond the home directory
+	*/
+	maxDepth = 6
 )
 
 type Application struct {
 	Directories []string
 	Logger      *zap.Logger
+	Cache       *Cache
 }
 
 func (a *Application) Setup() {
 	isStale, err := isCacheStale(Config.CacheFileFullPath)
 	if os.IsNotExist(err) {
-		Analyze(false)
+		a.Analyze()
 	} else {
 		cobra.CheckErr(err)
 		if isStale {
-			Analyze(false)
+			a.Analyze()
 		}
 	}
 
 	c, err := readFromCache(Config.CacheFileFullPath)
 	if c != nil {
 		a.Directories = c.Directories
+		a.Cache = c
 	}
+}
+
+func (a *Application) Analyze() {
+	excludeRegex := regexpJoinPartsOr(Config.SearchExcludes)
+
+	var projectDirs []string
+	var wg sync.WaitGroup
+
+	wg.Add(len(Config.SearchIncludes))
+
+	for _, search := range Config.SearchIncludes {
+		fullSearch := filepath.Join(Config.HomeDir, search)
+
+		go func(inclPath string) {
+			defer wg.Done()
+
+			// walker panics on directories that don't exist so lets make sure
+			// it does first
+			if _, err := os.Stat(inclPath); os.IsNotExist(err) {
+				return
+			}
+
+			var mDirs []string
+
+			walkFn := func(path string, fi os.FileInfo) error {
+				if excludeRegex.MatchString(path) {
+					return filepath.SkipDir
+				}
+
+				for _, re := range pathStops {
+					if re.MatchString(path) {
+						projectDirs = append(projectDirs, path)
+						mDirs = append(mDirs, path)
+
+						// SkipDir to tell the walker to not go any further
+						return filepath.SkipDir
+					}
+				}
+
+				return nil
+			}
+
+			errCallback := walker.WithErrorCallback(func(pathname string, err error) error {
+				if os.IsNotExist(err) {
+					return nil
+				}
+				if os.IsPermission(err) {
+					return nil
+				}
+				return err
+			})
+
+			err := walker.Walk(inclPath, walkFn, errCallback)
+			cobra.CheckErr(err)
+		}(fullSearch)
+	}
+
+	wg.Wait()
+
+	err := writeToCache(Config.CacheFileFullPath, removeGitParts(projectDirs))
+	cobra.CheckErr(err)
 }
 
 func NewApp(debug bool) *Application {
@@ -55,4 +140,24 @@ func NewLogger(debug bool) *zap.Logger {
 	logger, _ := c.Build()
 	defer logger.Sync()
 	return logger
+}
+
+func quoteParts(parts []string) []string {
+	var escaped []string
+	for _, part := range parts {
+		escaped = append(escaped, regexp.QuoteMeta(part))
+	}
+	return escaped
+}
+
+func regexpJoinPartsOr(parts []string) *regexp.Regexp {
+	return regexp.MustCompile(strings.Join(quoteParts(parts), "|"))
+}
+
+func removeGitParts(dirs []string) []string {
+	var r []string
+	for _, dir := range dirs {
+		r = append(r, strings.TrimRight(dir, "/.git"))
+	}
+	return r
 }
