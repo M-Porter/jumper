@@ -82,13 +82,13 @@ func (t *TUI) Stop() {
 }
 
 func (t *TUI) ExitWithNoChange() {
-	fmt.Print(".")
 	close(t.Done)
+	fmt.Print(".")
 }
 
 func (t *TUI) ExitWithSelected() {
-	fmt.Print(t.App.Directories[t.State.CursorPos])
 	close(t.Done)
+	fmt.Print(t.State.ListItems[t.State.CursorPos].Path)
 }
 
 func (*TUI) beforeDrawFunc(screen tcell.Screen) bool {
