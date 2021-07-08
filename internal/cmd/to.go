@@ -8,7 +8,7 @@ import (
 func ToCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "to",
-		Short: "Run the jumper TUI.",
+		Short: "Run the jumper TUI",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return core.Run(runInDebugMode)
 		},

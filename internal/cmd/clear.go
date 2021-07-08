@@ -9,29 +9,29 @@ func ClearCmd() *cobra.Command {
 		Use:   "cache",
 		Short: "Clear the jumper cache",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return nil
+			panic("todo")
 		},
 	}
 
 	clearConfigCmd := &cobra.Command{
-		Use:   "cache",
-		Short: "Clear the jumper config.",
+		Use:   "config",
+		Short: "Clear the jumper config",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return nil
+			panic("todo")
 		},
 	}
 
 	clearAllCmd := &cobra.Command{
 		Use:   "all",
-		Short: "Clear the jumper config and cache.",
+		Short: "Clear the jumper config and cache",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return nil
+			panic("todo")
 		},
 	}
 
 	cmd := &cobra.Command{
 		Use:   "clear",
-		Short: "Clear the jumper config or cache.",
+		Short: "Clear the jumper config or cache",
 	}
 
 	cmd.AddCommand(

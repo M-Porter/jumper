@@ -4,15 +4,12 @@ import "github.com/spf13/cobra"
 
 var (
 	runInDebugMode bool
-
-	resetCache  bool
-	resetConfig bool
 )
 
 func RootCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "jumper",
-		Short: "Seamlessly jump between projects on your machine.",
+		Short: "Seamlessly jump between projects on your machine",
 	}
 
 	cmd.PersistentFlags().BoolVar(&runInDebugMode, "debug", false, "Run jumper in debug mode.")
