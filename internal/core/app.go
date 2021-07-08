@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"github.com/m-porter/jumper/internal/config"
 	"github.com/saracen/walker"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -39,7 +40,7 @@ type Application struct {
 }
 
 func (a *Application) Setup() {
-	isStale, err := isCacheStale(Config.CacheFileFullPath)
+	isStale, err := isCacheStale(config.C.CacheFileFullPath)
 	if os.IsNotExist(err) {
 		a.Analyze()
 	} else {
@@ -49,7 +50,7 @@ func (a *Application) Setup() {
 		}
 	}
 
-	c, err := readFromCache(Config.CacheFileFullPath)
+	c, err := readFromCache(config.C.CacheFileFullPath)
 	if c != nil {
 		a.Directories = c.Directories
 		a.Cache = c
@@ -57,17 +58,17 @@ func (a *Application) Setup() {
 }
 
 func (a *Application) Analyze() {
-	excludeRegex := regexpJoinPartsOr(Config.SearchExcludes)
+	excludeRegex := regexpJoinPartsOr(config.C.SearchExcludes)
 
 	var projectDirs []string
 	var wg sync.WaitGroup
 
 	counter := 0
 
-	wg.Add(len(Config.SearchIncludes))
+	wg.Add(len(config.C.SearchIncludes))
 
-	for _, search := range Config.SearchIncludes {
-		fullSearch := filepath.Join(Config.HomeDir, search)
+	for _, search := range config.C.SearchIncludes {
+		fullSearch := filepath.Join(config.C.HomeDir, search)
 		a.Log("analyzing path", zap.String("path", fullSearch))
 
 		go func(inclPath string) {
@@ -133,7 +134,7 @@ func (a *Application) Analyze() {
 	a.Log("number of directories walked", zap.Int("count", counter))
 	a.Log("projects found", zap.Int("count", len(projectDirs)))
 
-	err := writeToCache(Config.CacheFileFullPath, projectDirs)
+	err := writeToCache(config.C.CacheFileFullPath, projectDirs)
 	if err != nil {
 		a.Log("failed writing to cache")
 		cobra.CheckErr(err)
@@ -160,7 +161,7 @@ func NewLogger(debug bool) *zap.Logger {
 
 	t := time.Now()
 	logFileName := fmt.Sprintf("%0.4d-%0.2d-%0.2d.log", t.Year(), t.Month(), t.Day())
-	outputPath := filepath.Join(Config.HomeDir, JumperDirname, logFileName)
+	outputPath := filepath.Join(config.C.HomeDir, config.JumperDirname, logFileName)
 	c := zap.NewDevelopmentConfig()
 	c.OutputPaths = []string{outputPath}
 	c.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)

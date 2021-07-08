@@ -1,4 +1,4 @@
-package core
+package config
 
 import (
 	"github.com/mitchellh/go-homedir"
@@ -10,8 +10,8 @@ import (
 
 const (
 	JumperDirname    = ".jumper"
-	ConfigFilename   = "config"
-	ConfigType       = "yml"
+	Filename         = "config"
+	Type             = "yml"
 	DefaultCacheFile = "cache"
 )
 
@@ -33,7 +33,7 @@ var (
 	}
 )
 
-type Configuration struct {
+type Config struct {
 	HomeDir           string
 	JumperDir         string
 	CacheFileFullPath string
@@ -42,7 +42,7 @@ type Configuration struct {
 	SearchExcludes    []string `mapstructure:"search_excludes"`
 }
 
-var Config *Configuration = nil
+var C *Config = nil
 
 func Init() {
 	hd, err := homedir.Dir()
@@ -54,9 +54,9 @@ func Init() {
 		cobra.CheckErr(err)
 	}
 
+	viper.SetConfigName(Filename)
+	viper.SetConfigType(Type)
 	viper.AddConfigPath(configDirFull)
-	viper.SetConfigName(ConfigFilename)
-	viper.SetConfigType(ConfigType)
 
 	viper.SetDefault("cache_file", DefaultCacheFile)
 	viper.SetDefault("search_includes", defaultIncludes)
@@ -70,13 +70,14 @@ func Init() {
 		cobra.CheckErr(err)
 	}
 
-	viper.AutomaticEnv()
-
-	Config = &Configuration{}
-	err = viper.Unmarshal(Config)
+	err = viper.ReadInConfig()
 	cobra.CheckErr(err)
 
-	Config.HomeDir = hd
-	Config.CacheFileFullPath = filepath.Join(Config.HomeDir, JumperDirname, Config.CacheFile)
-	Config.JumperDir = filepath.Join(Config.HomeDir, JumperDirname)
+	C = &Config{}
+	err = viper.Unmarshal(C)
+	cobra.CheckErr(err)
+
+	C.HomeDir = hd
+	C.CacheFileFullPath = filepath.Join(C.HomeDir, JumperDirname, C.CacheFile)
+	C.JumperDir = filepath.Join(C.HomeDir, JumperDirname)
 }

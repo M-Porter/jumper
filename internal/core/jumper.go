@@ -2,14 +2,16 @@ package core
 
 import "time"
 
-type listStyle uint8
+type listStyle uint
 
 const (
 	tickerTimeInterval = time.Millisecond * 10
+)
 
-	listStyleShort    listStyle = 0
-	listStyleLong     listStyle = 1
-	listStyleDetailed listStyle = 2
+const (
+	listStyleShort    listStyle = iota
+	listStyleLong     listStyle = iota
+	listStyleDetailed listStyle = iota
 )
 
 var (
