@@ -1,18 +1,16 @@
 package core
 
 import (
-	"fmt"
 	"github.com/m-porter/jumper/internal/config"
+	"github.com/m-porter/jumper/internal/logger"
 	"github.com/saracen/walker"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
-	"time"
 )
 
 var (
@@ -35,7 +33,6 @@ var (
 
 type Application struct {
 	Directories []string
-	Logger      *zap.Logger
 	Cache       *Cache
 }
 
@@ -69,7 +66,7 @@ func (a *Application) Analyze() {
 
 	for _, search := range config.C.SearchIncludes {
 		fullSearch := filepath.Join(config.C.HomeDir, search)
-		a.Log("analyzing path", zap.String("path", fullSearch))
+		logger.Log("analyzing path", zap.String("path", fullSearch))
 
 		go func(inclPath string) {
 			defer wg.Done()
@@ -77,7 +74,7 @@ func (a *Application) Analyze() {
 			// walker panics on directories that don't exist so lets make sure
 			// it does first
 			if _, err := os.Stat(inclPath); os.IsNotExist(err) {
-				a.Log("skipping directory: IsNotExist", zap.String("path", inclPath))
+				logger.Log("skipping directory: IsNotExist", zap.String("path", inclPath))
 				return
 			}
 
@@ -87,7 +84,7 @@ func (a *Application) Analyze() {
 				counter++
 
 				if excludeRegex.MatchString(p) {
-					a.Log("directory matches excludes", zap.String("path", p))
+					logger.Log("directory matches excludes", zap.String("path", p))
 					return filepath.SkipDir
 				}
 
@@ -97,7 +94,7 @@ func (a *Application) Analyze() {
 						projectDirs = append(projectDirs, cleanPath)
 						mDirs = append(mDirs, cleanPath)
 
-						a.Log("appending directory", zap.String("path", cleanPath))
+						logger.Log("appending directory", zap.String("path", cleanPath))
 
 						//SkipDir to tell the walker to not go any further
 						return filepath.SkipDir
@@ -131,43 +128,20 @@ func (a *Application) Analyze() {
 
 	projectDirs = removeDuplicates(projectDirs)
 
-	a.Log("number of directories walked", zap.Int("count", counter))
-	a.Log("projects found", zap.Int("count", len(projectDirs)))
+	logger.Log("number of directories walked", zap.Int("count", counter))
+	logger.Log("projects found", zap.Int("count", len(projectDirs)))
 
 	err := writeToCache(config.C.CacheFileFullPath, projectDirs)
 	if err != nil {
-		a.Log("failed writing to cache")
+		logger.Log("failed writing to cache")
 		cobra.CheckErr(err)
-	}
-}
-
-func (a *Application) Log(msg string, fields ...zap.Field) {
-	if a.Logger != nil {
-		a.Logger.Debug(msg, fields...)
 	}
 }
 
 func NewApp(debug bool) *Application {
 	return &Application{
 		Directories: []string{},
-		Logger:      NewLogger(debug),
 	}
-}
-
-func NewLogger(debug bool) *zap.Logger {
-	if !debug {
-		return nil
-	}
-
-	t := time.Now()
-	logFileName := fmt.Sprintf("%0.4d-%0.2d-%0.2d.log", t.Year(), t.Month(), t.Day())
-	outputPath := filepath.Join(config.C.HomeDir, config.JumperDirname, logFileName)
-	c := zap.NewDevelopmentConfig()
-	c.OutputPaths = []string{outputPath}
-	c.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
-	logger, _ := c.Build()
-	defer logger.Sync()
-	return logger
 }
 
 func quoteParts(parts []string) []string {

@@ -17,6 +17,18 @@ var (
 	ColorFgBlue    = color.HEX("#60A5FA")
 )
 
+type listStyle uint
+
+const (
+	listStyleShort listStyle = iota
+	listStyleLong
+	listStyleDetailed
+)
+
+var (
+	listStyles = []listStyle{listStyleShort, listStyleLong, listStyleDetailed}
+)
+
 type TUIState struct {
 	CursorPos         int
 	ListStyle         listStyle

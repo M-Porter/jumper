@@ -45,8 +45,7 @@ type Config struct {
 var C *Config = nil
 
 func Init() {
-	hd, err := homedir.Dir()
-	cobra.CheckErr(err)
+	hd := HomeDir()
 
 	configDirFull := filepath.Join(hd, JumperDirname)
 	if _, err := os.Stat(configDirFull); os.IsNotExist(err) {
@@ -62,7 +61,7 @@ func Init() {
 	viper.SetDefault("search_includes", defaultIncludes)
 	viper.SetDefault("search_excludes", defaultExcludes)
 
-	err = viper.SafeWriteConfig()
+	err := viper.SafeWriteConfig()
 	if _, ok := err.(viper.ConfigFileAlreadyExistsError); ok {
 		// ignore, this is ok. just means the core already exists so
 		// we don't need to write a new one
@@ -80,4 +79,10 @@ func Init() {
 	C.HomeDir = hd
 	C.CacheFileFullPath = filepath.Join(C.HomeDir, JumperDirname, C.CacheFile)
 	C.JumperDir = filepath.Join(C.HomeDir, JumperDirname)
+}
+
+func HomeDir() string {
+	hd, err := homedir.Dir()
+	cobra.CheckErr(err)
+	return hd
 }
