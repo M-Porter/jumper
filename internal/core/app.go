@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/m-porter/jumper/internal/config"
+	"github.com/m-porter/jumper/internal/lib"
 	"github.com/m-porter/jumper/internal/logger"
 	"github.com/saracen/walker"
 	"github.com/spf13/cobra"
@@ -55,7 +56,7 @@ func (a *Application) Setup() {
 }
 
 func (a *Application) Analyze() {
-	excludeRegex := regexpJoinPartsOr(config.C.SearchExcludes)
+	excludeRegex := lib.RegexpJoinPartsOr(config.C.SearchExcludes)
 
 	var projectDirs []string
 	var wg sync.WaitGroup
@@ -126,7 +127,7 @@ func (a *Application) Analyze() {
 
 	wg.Wait()
 
-	projectDirs = removeDuplicates(projectDirs)
+	projectDirs = lib.RemoveDuplicates(projectDirs)
 
 	logger.Log("number of directories walked", zap.Int("count", counter))
 	logger.Log("projects found", zap.Int("count", len(projectDirs)))
@@ -142,28 +143,4 @@ func NewApp(debug bool) *Application {
 	return &Application{
 		Directories: []string{},
 	}
-}
-
-func quoteParts(parts []string) []string {
-	var escaped []string
-	for _, part := range parts {
-		escaped = append(escaped, regexp.QuoteMeta(part))
-	}
-	return escaped
-}
-
-func regexpJoinPartsOr(parts []string) *regexp.Regexp {
-	return regexp.MustCompile(strings.Join(quoteParts(parts), "|"))
-}
-
-func removeDuplicates(dirs []string) []string {
-	set := make(map[string]struct{})
-	var r []string
-	for _, dir := range dirs {
-		if _, ok := set[dir]; !ok {
-			r = append(r, dir)
-			set[dir] = struct{}{}
-		}
-	}
-	return r
 }

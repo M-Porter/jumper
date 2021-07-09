@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/gookit/color"
+	"github.com/m-porter/jumper/internal/lib"
 	"github.com/rivo/tview"
 	"io"
 	"path/filepath"
@@ -224,7 +225,7 @@ func (t *TUI) doSearch(text string) {
 	if text == "" {
 		results = t.App.Directories
 	} else {
-		results = filterDirectories(t.App.Directories, text)
+		results = lib.FuzzySearchSlice(t.App.Directories, text)
 	}
 
 	now := time.Now().UnixNano()
