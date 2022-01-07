@@ -1,9 +1,10 @@
-package core
+package tui
 
 import (
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/gookit/color"
+	"github.com/m-porter/jumper/internal/core"
 	"github.com/m-porter/jumper/internal/lib"
 	"github.com/m-porter/jumper/internal/logger"
 	"github.com/rivo/tview"
@@ -13,54 +14,35 @@ import (
 	"time"
 )
 
-var (
-	ColorBgDefault = color.BgDefault
-	ColorBgGray    = color.HEX("#424242", true)
-	ColorFgRed     = color.HEX("#E53935")
-	ColorFgBlue    = color.HEX("#60A5FA")
-)
-
-type listStyle uint
-
-const (
-	listStyleShort listStyle = iota
-	listStyleLong
-	listStyleDetailed
-)
-
-var (
-	listStyles = []listStyle{listStyleShort, listStyleLong, listStyleDetailed}
-)
-
-type TUIState struct {
+type State struct {
 	CursorPos         int
-	ListStyle         listStyle
+	ListStyle         ListStyle
 	ResultsListMaxH   int
 	ListItems         []ListItem
 	ListLastUpdatedAt int64
 }
 
 type TUI struct {
-	App    *Application
+	App    *core.Application
 	Screen *tview.Application
-	//Ticker *time.Ticker
-	//Done   chan struct{}
 	Events lib.Events
-	State  *TUIState
+	State  *State
 }
 
-func NewTUI(app *Application) *TUI {
+func Run(runInDebugMode bool) error {
+	app := core.NewApp(runInDebugMode)
+	t := New(app)
+	return t.Run()
+}
+
+func New(app *core.Application) *TUI {
 	return &TUI{
 		App:    app,
 		Screen: tview.NewApplication(),
-
-		//Ticker: time.NewTicker(tickerTimeInterval),
-		//Done:   make(chan struct{}),
 		Events: lib.EventsStream(),
-
-		State: &TUIState{
+		State: &State{
 			CursorPos:         0,
-			ListStyle:         listStyleShort,
+			ListStyle:         ListStyleShort,
 			ResultsListMaxH:   0,
 			ListItems:         []ListItem{},
 			ListLastUpdatedAt: 0,
@@ -115,10 +97,10 @@ func (*TUI) beforeDrawFunc(screen tcell.Screen) bool {
 
 func (t *TUI) toggleListStyle() {
 	next := int(t.State.ListStyle) + 1
-	if next < len(listStyles) {
-		t.State.ListStyle = listStyles[next]
+	if next < len(ListStyles) {
+		t.State.ListStyle = ListStyles[next]
 	} else {
-		t.State.ListStyle = listStyles[0]
+		t.State.ListStyle = ListStyles[0]
 	}
 }
 
@@ -289,13 +271,13 @@ type ListItem struct {
 	Dir  string
 }
 
-func (li *ListItem) LabelForStyle(style listStyle) string {
+func (li *ListItem) LabelForStyle(style ListStyle) string {
 	switch style {
-	case listStyleDetailed:
+	case ListStyleDetailed:
 		return fmt.Sprintf("%s (%s)", li.Base, li.Dir)
-	case listStyleLong:
+	case ListStyleLong:
 		return li.Path
-	case listStyleShort:
+	case ListStyleShort:
 		fallthrough
 	default:
 		return li.Base
