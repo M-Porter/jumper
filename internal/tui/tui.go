@@ -3,14 +3,11 @@ package tui
 import (
 	"fmt"
 	"github.com/gdamore/tcell/v2"
-	"github.com/gookit/color"
 	"github.com/m-porter/jumper/internal/core"
 	"github.com/m-porter/jumper/internal/lib"
 	"github.com/m-porter/jumper/internal/logger"
 	"github.com/rivo/tview"
 	"go.uber.org/zap"
-	"io"
-	"path/filepath"
 	"time"
 )
 
@@ -244,44 +241,4 @@ func (t *TUI) inputView() *tview.InputField {
 	in.SetFieldTextColor(tcell.ColorReset)
 
 	return in
-}
-
-func colorize(v io.Writer, text string) {
-	_, _ = tview.ANSIWriter(v).Write([]byte(text))
-}
-
-func ctoc(c color.RGBColor) tcell.Color {
-	v := c.Values()
-	return tcell.NewRGBColor(int32(v[0]), int32(v[1]), int32(v[2]))
-}
-
-func pathsToListItems(paths []string) []ListItem {
-	var r []ListItem
-	for _, path := range paths {
-		r = append(r, ListItem{
-			Path: path,
-			Base: filepath.Base(path),
-			Dir:  filepath.Dir(path),
-		})
-	}
-	return r
-}
-
-type ListItem struct {
-	Path string
-	Base string
-	Dir  string
-}
-
-func (li *ListItem) LabelForStyle(style ListStyle) string {
-	switch style {
-	case ListStyleDetailed:
-		return fmt.Sprintf("%s (%s)", li.Base, li.Dir)
-	case ListStyleLong:
-		return li.Path
-	case ListStyleShort:
-		fallthrough
-	default:
-		return li.Base
-	}
 }
