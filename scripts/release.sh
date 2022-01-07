@@ -14,7 +14,7 @@ else
     git push origin "$TAG_VERSION"
 fi
 
-goreleaser release
+goreleaser release --rm-dist
 
 # can delete tags with
 #   git tag -d "$TAG_VERSION"
