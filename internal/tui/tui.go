@@ -29,12 +29,6 @@ type TUI struct {
 	State  *State
 }
 
-func Run(runInDebugMode bool) error {
-	app := core.NewApp(runInDebugMode)
-	t := New(app)
-	return t.Run()
-}
-
 func New(app *core.Application) *TUI {
 	return &TUI{
 		App:    app,
@@ -76,7 +70,7 @@ func (t *TUI) Setup() {
 }
 
 func (t *TUI) Stop() {
-	//t.Events.Close()
+	t.Events.Close()
 	t.Screen.Stop()
 }
 
@@ -102,13 +96,14 @@ func (t *TUI) toggleListStyle() {
 	} else {
 		t.State.ListStyle = ListStyles[0]
 	}
+
+	t.Events.Update()
 }
 
 func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
 	// tab to flip between list styles
 	if event.Key() == tcell.KeyTab {
 		t.toggleListStyle()
-		t.Events.Update()
 	}
 
 	// exit out
@@ -132,6 +127,10 @@ func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
 	}
 
 	return event
+}
+
+func (t *TUI) resetCursorPos() {
+	t.State.CursorPos = 0
 }
 
 func (t *TUI) moveCursorPosUp() {
@@ -167,6 +166,7 @@ func (t *TUI) resultsViewUpdater(view *tview.Flex) {
 		select {
 		case evt := <-t.Events:
 			logger.Log("event received", zap.Int("event", evt))
+
 			switch evt {
 			case lib.EventUpdate:
 				_, _, _, height := view.GetInnerRect()
@@ -176,6 +176,7 @@ func (t *TUI) resultsViewUpdater(view *tview.Flex) {
 					view.Clear()
 					t.addResults(view)
 				})
+
 			case lib.EventDone:
 				t.Stop()
 				return
@@ -235,6 +236,7 @@ func (t *TUI) inputView() *tview.InputField {
 		SetFieldBackgroundColor(tcell.ColorReset).
 		SetLabelColor(ctoc(ColorFgBlue)).
 		SetChangedFunc(func(text string) {
+			t.resetCursorPos()
 			go t.doSearch(text)
 		})
 
