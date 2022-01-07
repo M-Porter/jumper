@@ -5,7 +5,9 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/gookit/color"
 	"github.com/m-porter/jumper/internal/lib"
+	"github.com/m-porter/jumper/internal/logger"
 	"github.com/rivo/tview"
+	"go.uber.org/zap"
 	"io"
 	"path/filepath"
 	"time"
@@ -41,8 +43,9 @@ type TUIState struct {
 type TUI struct {
 	App    *Application
 	Screen *tview.Application
-	Ticker *time.Ticker
-	Done   chan struct{}
+	//Ticker *time.Ticker
+	//Done   chan struct{}
+	Events lib.Events
 	State  *TUIState
 }
 
@@ -51,8 +54,9 @@ func NewTUI(app *Application) *TUI {
 		App:    app,
 		Screen: tview.NewApplication(),
 
-		Ticker: time.NewTicker(tickerTimeInterval),
-		Done:   make(chan struct{}),
+		//Ticker: time.NewTicker(tickerTimeInterval),
+		//Done:   make(chan struct{}),
+		Events: lib.EventsStream(),
 
 		State: &TUIState{
 			CursorPos:         0,
@@ -90,17 +94,17 @@ func (t *TUI) Setup() {
 }
 
 func (t *TUI) Stop() {
-	t.Ticker.Stop()
+	//t.Events.Close()
 	t.Screen.Stop()
 }
 
 func (t *TUI) ExitWithNoChange() {
-	close(t.Done)
+	t.Events.Done()
 	fmt.Print(".")
 }
 
 func (t *TUI) ExitWithSelected() {
-	close(t.Done)
+	t.Events.Done()
 	fmt.Print(t.State.ListItems[t.State.CursorPos].Path)
 }
 
@@ -122,6 +126,7 @@ func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
 	// tab to flip between list styles
 	if event.Key() == tcell.KeyTab {
 		t.toggleListStyle()
+		t.Events.Update()
 	}
 
 	// exit out
@@ -137,9 +142,11 @@ func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
 	// move cursor around
 	if event.Key() == tcell.KeyUp {
 		t.moveCursorPosUp()
+		t.Events.Update()
 	}
 	if event.Key() == tcell.KeyDown {
 		t.moveCursorPosDown()
+		t.Events.Update()
 	}
 
 	return event
@@ -176,17 +183,21 @@ func (t *TUI) resultsViewUpdater(view *tview.Flex) {
 
 	for {
 		select {
-		case <-t.Done:
-			t.Stop()
-			return
-		case <-t.Ticker.C:
-			_, _, _, height := view.GetInnerRect()
-			t.State.ResultsListMaxH = height
+		case evt := <-t.Events:
+			logger.Log("event received", zap.Int("event", evt))
+			switch evt {
+			case lib.EventUpdate:
+				_, _, _, height := view.GetInnerRect()
+				t.State.ResultsListMaxH = height
 
-			t.Screen.QueueUpdateDraw(func() {
-				view.Clear()
-				t.addResults(view)
-			})
+				t.Screen.QueueUpdateDraw(func() {
+					view.Clear()
+					t.addResults(view)
+				})
+			case lib.EventDone:
+				t.Stop()
+				return
+			}
 		}
 	}
 }
@@ -232,6 +243,7 @@ func (t *TUI) doSearch(text string) {
 	if now > t.State.ListLastUpdatedAt {
 		t.State.ListItems = pathsToListItems(results)
 		t.State.ListLastUpdatedAt = now
+		t.Events.Update()
 	}
 }
 
