@@ -1,6 +1,6 @@
 # Jumper
 
-Seamlessly jump between projects on your machine.
+Quickly jump to your project directories.
 
 ## Installation
 

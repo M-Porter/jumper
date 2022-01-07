@@ -1,6 +1,7 @@
 package lib
 
 type Event = int
+
 const (
 	EventUpdate Event = iota
 	EventDone

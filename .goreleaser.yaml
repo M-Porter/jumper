@@ -1,0 +1,24 @@
+brews:
+  - name: jumper
+    tap:
+      owner: M-Porter
+      name: homebrew-tap
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    commit_author:
+      name: Matt Porter
+      email: mtp5129@gmail.com
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    homepage: "https://github.com/M-Porter/jumper"
+    license: "MIT"
+    description: "Quickly jump to your project directories"
+    caveats: |
+      * Add the following to your shell profile and then use it with `j`
+          source "$(brew --prefix jumper)/jumper.sh"
+      * Change the shortcut by exporting `JUMPER_FUNC` to whatever you want.
+      * See https://github.com/M-Porter/jumper/blob/main/README.md for more post-installation directions.
+    install: |
+      bin.install "jumper"
+      prefix.install "bin/jumper.sh"
+    test: |
+      system "#{bin}/program --version"
