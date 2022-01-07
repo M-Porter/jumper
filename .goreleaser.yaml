@@ -4,7 +4,7 @@ brews:
       owner: M-Porter
       name: homebrew-tap
       branch: main
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+      token: "{{ .Env.GITHUB_TOKEN }}"
     commit_author:
       name: Matt Porter
       email: mtp5129@gmail.com

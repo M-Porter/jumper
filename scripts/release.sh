@@ -8,13 +8,11 @@ COMMIT_MESSAGE="$2"
 
 git ls-remote --exit-code --tags origin "$TAG_VERSION"
 if [[ "$?" == "0" ]]; then
-    echo "ERROR! Remote tag $TAG_VERSION already exists."
-    echo "Exiting."
-    exit 1
+    echo "Warning! Remote tag $TAG_VERSION already exists."
+else
+    git tag -a "$TAG_VERSION" -m "$COMMIT_MESSAGE"
+    git push origin "$TAG_VERSION"
 fi
-
-git tag -a "$TAG_VERSION" -m "$COMMIT_MESSAGE"
-git push origin "$TAG_VERSION"
 
 goreleaser release
 
