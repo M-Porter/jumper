@@ -21,4 +21,4 @@ brews:
       bin.install "jumper"
       prefix.install "bin/jumper.sh"
     test: |
-      system "#{bin}/program --version"
+      system "#{bin}/jumper --version"
