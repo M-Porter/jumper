@@ -19,6 +19,6 @@ brews:
       * See https://github.com/M-Porter/jumper/blob/main/README.md for more post-installation directions.
     install: |
       bin.install "jumper"
-      prefix.install "bin/jumper.sh"
+    #      prefix.install "bin/jumper.sh"
     test: |
       system "#{bin}/jumper --version"
