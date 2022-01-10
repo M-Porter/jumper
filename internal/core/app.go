@@ -9,22 +9,11 @@ import (
 	"go.uber.org/zap"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"sync"
 )
 
 var (
-	// how we determine not to go any deeper when walking
-	pathStops = []*regexp.Regexp{
-		regexp.MustCompile("/\\.git$"),
-		regexp.MustCompile("/Gemfile$"),
-		regexp.MustCompile("/package\\.json$"),
-		regexp.MustCompile("/go\\.mod$"),
-		regexp.MustCompile("/setup\\.py$"),
-		regexp.MustCompile("/pyproject\\.toml$"),
-	}
-
 	/*
 		todo: implement this
 		max depth - how far deep we attempt to go beyond the home directory
@@ -89,7 +78,7 @@ func (a *Application) Analyze() {
 					return filepath.SkipDir
 				}
 
-				for _, re := range pathStops {
+				for _, re := range config.C.SearchPathStops {
 					if re.MatchString(p) {
 						cleanPath := filepath.Dir(p)
 						projectDirs = append(projectDirs, cleanPath)
