@@ -63,7 +63,7 @@ func Init() {
 
 	err := viper.SafeWriteConfig()
 	if _, ok := err.(viper.ConfigFileAlreadyExistsError); ok {
-		// ignore, this is ok. just means the core already exists so
+		// ignore, this is ok. just means the config already exists, so
 		// we don't need to write a new one
 	} else {
 		cobra.CheckErr(err)
@@ -75,6 +75,13 @@ func Init() {
 	C = &Config{}
 	err = viper.Unmarshal(C)
 	cobra.CheckErr(err)
+
+	// write the config after reading and setting defaults in case something
+	// had changed or a new config value was added
+	go func() {
+		err = viper.WriteConfig()
+		cobra.CheckErr(err)
+	}()
 
 	C.HomeDir = hd
 	C.CacheFileFullPath = filepath.Join(C.HomeDir, JumperDirname, C.CacheFile)
