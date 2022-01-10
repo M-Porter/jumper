@@ -100,7 +100,10 @@ func Init() {
 	cobra.CheckErr(err)
 
 	// write the config after reading and setting defaults in case something
-	// had changed or a new config value was added
+	// had changed or a new config value was added.
+	//
+	// can write the file out behind the scenes since we don't read it in again
+	// for the duration of the script running.
 	go func() {
 		err = viper.WriteConfig()
 		cobra.CheckErr(err)
