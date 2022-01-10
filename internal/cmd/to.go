@@ -9,7 +9,7 @@ import (
 func ToCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "to",
-		Short: "Run the jumper TUI",
+		Short: "Display projects in an intractable list.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return tui.New(core.NewApp(runInDebugMode)).Run()
 		},
