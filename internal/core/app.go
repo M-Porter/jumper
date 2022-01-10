@@ -13,14 +13,6 @@ import (
 	"sync"
 )
 
-var (
-	/*
-		todo: implement this
-		max depth - how far deep we attempt to go beyond the home directory
-	*/
-	maxDepth = 6
-)
-
 type Application struct {
 	Directories []string
 	Cache       *Cache
@@ -91,7 +83,7 @@ func (a *Application) Analyze() {
 					}
 				}
 
-				if len(strings.Split(filepath.Dir(p), string(filepath.Separator))) > maxDepth {
+				if len(strings.Split(filepath.Dir(p), string(filepath.Separator))) > config.C.SearchMaxDepth {
 					//SkipDir to tell the walker to not go any further
 					return filepath.SkipDir
 				}

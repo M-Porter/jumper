@@ -41,6 +41,7 @@ var (
 		"/setup.py",
 		"/pyproject.toml",
 	}
+	defaultSearchMaxDepth = 6
 )
 
 type Config struct {
@@ -51,6 +52,7 @@ type Config struct {
 	SearchIncludes    []string
 	SearchExcludes    []string
 	SearchPathStops   []*regexp.Regexp
+	SearchMaxDepth    int
 }
 
 // the config structure as written to the file
@@ -62,6 +64,8 @@ type configFromFile struct {
 	SearchExcludes []string `mapstructure:"search_excludes"`
 	// how we determine not to go any deeper when walking
 	SearchPathStops []string `mapstructure:"search_path_stops"`
+	// how far deep we attempt to search beyond the home directory
+	SearchMaxDepth int `mapstructure:"search_max_depth"`
 }
 
 var C *Config = nil
@@ -83,6 +87,7 @@ func Init() {
 	viper.SetDefault("search_includes", defaultSearchIncludes)
 	viper.SetDefault("search_excludes", defaultSearchExcludes)
 	viper.SetDefault("search_path_stops", defaultSearchPathStops)
+	viper.SetDefault("search_max_depth", defaultSearchMaxDepth)
 
 	err := viper.SafeWriteConfig()
 	if _, ok := err.(viper.ConfigFileAlreadyExistsError); ok {
@@ -115,6 +120,7 @@ func Init() {
 		SearchIncludes: internalConf.SearchIncludes,
 		SearchExcludes: internalConf.SearchExcludes,
 		CacheFile:      internalConf.CacheFile,
+		SearchMaxDepth: internalConf.SearchMaxDepth,
 	}
 
 	C.CacheFileFullPath = filepath.Join(C.HomeDir, JumperDirname, C.CacheFile)
