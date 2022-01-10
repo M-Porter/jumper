@@ -4,7 +4,7 @@ set -u
 : "${GITHUB_TOKEN:?GITHUB_TOKEN not set in the environment.}"
 
 TAG_VERSION="$1"
-COMMIT_MESSAGE="$2"
+COMMIT_MESSAGE="Release $TAG_VERSION"
 
 git ls-remote --exit-code --tags origin "$TAG_VERSION"
 if [[ "$?" == "0" ]]; then
