@@ -13,12 +13,6 @@ brews:
     license: "MIT"
     description: "Quickly jump to your project directories"
     caveats: |
-      * Add the following to your shell profile and then use it with `j`
-          source "$(brew --prefix jumper)/jumper.sh"
-      * Change the shortcut by exporting `JUMPER_FUNC` to whatever you want.
-      * See https://github.com/M-Porter/jumper/blob/main/README.md for more post-installation directions.
+      Run `jumper setup` for setup instructions.
     install: |
       bin.install "jumper"
-    #      prefix.install "bin/jumper.sh"
-    test: |
-      system "#{bin}/jumper --version"
