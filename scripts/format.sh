@@ -7,3 +7,6 @@ PROJ_ROOT=$(cd -- "$(dirname -- "${THIS_DIR}/../.")" &> /dev/null && pwd)
 
 echo "Running gofmt on $PROJ_ROOT"
 gofmt -w "$PROJ_ROOT"
+
+echo "Running goimports on $PROJ_ROOT"
+goimports -w "$PROJ_ROOT/"

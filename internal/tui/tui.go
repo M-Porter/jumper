@@ -2,13 +2,14 @@ package tui
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/m-porter/jumper/internal/core"
 	"github.com/m-porter/jumper/internal/lib"
 	"github.com/m-porter/jumper/internal/logger"
 	"github.com/rivo/tview"
 	"go.uber.org/zap"
-	"time"
 )
 
 type State struct {

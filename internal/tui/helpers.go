@@ -1,10 +1,11 @@
 package tui
 
 import (
+	"io"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/gookit/color"
 	"github.com/rivo/tview"
-	"io"
 )
 
 func colorize(v io.Writer, text string) {

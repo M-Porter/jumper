@@ -2,11 +2,12 @@ package logger
 
 import (
 	"fmt"
+	"path/filepath"
+	"time"
+
 	"github.com/m-porter/jumper/internal/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"path/filepath"
-	"time"
 )
 
 var (

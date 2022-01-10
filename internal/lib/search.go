@@ -1,8 +1,9 @@
 package lib
 
 import (
-	"github.com/lithammer/fuzzysearch/fuzzy"
 	"sort"
+
+	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
 func FuzzySearchSlice(data []string, term string) []string {

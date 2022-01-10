@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"github.com/m-porter/jumper/internal/logger"
 	"github.com/spf13/cobra"
+
+	"github.com/m-porter/jumper/internal/logger"
 )
 
 var (

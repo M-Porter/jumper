@@ -1,16 +1,17 @@
 package core
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+
 	"github.com/m-porter/jumper/internal/config"
 	"github.com/m-porter/jumper/internal/lib"
 	"github.com/m-porter/jumper/internal/logger"
 	"github.com/saracen/walker"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"os"
-	"path/filepath"
-	"strings"
-	"sync"
 )
 
 type Application struct {
