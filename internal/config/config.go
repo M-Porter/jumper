@@ -10,49 +10,15 @@ import (
 	"regexp"
 )
 
-const (
-	JumperDirname    = ".jumper"
-	Filename         = "config"
-	Type             = "yml"
-	DefaultCacheFile = "cache"
-)
-
-var (
-	defaultSearchIncludes = []string{
-		"development/",
-		"dev/",
-		"xcode-projects/",
-		"repos/",
-	}
-	defaultSearchExcludes = []string{
-		"/node_modules",
-		"/bin",
-		"/temp",
-		"/tmp",
-		"/vendor",
-		"/venv",
-		"/ios/Pods",
-	}
-	defaultSearchPathStops = []string{
-		"/.git",
-		"/Gemfile",
-		"/package.json",
-		"/go.mod",
-		"/setup.py",
-		"/pyproject.toml",
-	}
-	defaultSearchMaxDepth = 6
-)
-
 type Config struct {
 	HomeDir           string
 	JumperDir         string
 	CacheFileFullPath string
 	CacheFile         string
-	SearchIncludes    []string
-	SearchExcludes    []string
-	SearchPathStops   []*regexp.Regexp
-	SearchMaxDepth    int
+	SearchIncludes    []string         // see configFromFile.SearchIncludes
+	SearchExcludes    []string         // see configFromFile.SearchExcludes
+	SearchPathStops   []*regexp.Regexp // see configFromFile.SearchPathStops
+	SearchMaxDepth    int              // see configFromFile.SearchMaxDepth
 }
 
 // the config structure as written to the file

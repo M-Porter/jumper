@@ -83,7 +83,7 @@ func (a *Application) Analyze() {
 					}
 				}
 
-				if len(strings.Split(filepath.Dir(p), string(filepath.Separator))) > config.C.SearchMaxDepth {
+				if !canSearchDeeper(p) {
 					//SkipDir to tell the walker to not go any further
 					return filepath.SkipDir
 				}
@@ -118,6 +118,10 @@ func (a *Application) Analyze() {
 		logger.Log("failed writing to cache")
 		cobra.CheckErr(err)
 	}
+}
+
+func canSearchDeeper(path string) bool {
+	return len(strings.Split(filepath.Dir(path), string(filepath.Separator))) <= config.C.SearchMaxDepth
 }
 
 func NewApp(debug bool) *Application {
