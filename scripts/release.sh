@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eu
+set -u
 : "${GITHUB_TOKEN:?GITHUB_TOKEN not set in the environment.}"
 
 TAG_VERSION="$1"
