@@ -195,18 +195,7 @@ func (t *TUI) addResults(view *tview.Flex) {
 		line.SetTextColor(tcell.ColorReset)
 		line.SetDynamicColors(true)
 
-		label := item.LabelForStyle(t.State.ListStyle)
-
-		space := " "
-		if i == t.State.CursorPos {
-			space = ">"
-			label = ColorBgGray.Sprintf(" %s ", label)
-		} else {
-			label = fmt.Sprintf(" %s", label)
-		}
-
-		space = ColorBgGray.Sprintf("%s", ColorFgRed.Sprint(space))
-		colorize(line, ColorBgDefault.Sprintf("%s%s", space, label))
+		colorize(line, item.Format(t.State.ListStyle, i == t.State.CursorPos))
 
 		view.AddItem(line, 1, 1, false)
 	}

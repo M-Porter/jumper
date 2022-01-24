@@ -23,15 +23,31 @@ type ListItem struct {
 	Dir  string
 }
 
-func (li *ListItem) LabelForStyle(style ListStyle) string {
+func (li *ListItem) Format(style ListStyle, selected bool) string {
+	var line string
+
 	switch style {
 	case ListStyleDetailed:
-		return fmt.Sprintf("%s (%s)", li.Base, li.Dir)
+		line = fmt.Sprintf("%s (%s)", li.Base, li.Dir)
 	case ListStyleLong:
-		return li.Path
+		line = li.Path
 	case ListStyleShort:
 		fallthrough
 	default:
-		return li.Base
+		line = li.Base
 	}
+
+	spaceChar := " "
+	if selected {
+		spaceChar = ">"
+		line = ColorBgGray.Sprintf(" %s ", line)
+	} else {
+		line = fmt.Sprintf(" %s", line)
+	}
+
+	spaceChar = ColorBgGray.Sprintf("%s", ColorFgRed.Sprint(spaceChar))
+
+	line = ColorBgDefault.Sprintf("%s%s", spaceChar, line)
+
+	return line
 }
