@@ -9,11 +9,10 @@ import (
 	"github.com/m-porter/jumper/internal/lib"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/m-porter/jumper/internal/core"
 )
 
-const lineIndicator = "❯"
+var selectedPath string
 
 var program *tea.Program
 
@@ -23,29 +22,6 @@ type listItem struct {
 	Path string
 	Base string
 	Dir  string
-}
-
-func (l listItem) format(selected bool, style listStyle) string {
-	bgGrayStyle := lipgloss.NewStyle().Background(colorGray).Bold(true)
-
-	var line string
-	if selected {
-		indicatorStyle := lipgloss.NewStyle().
-			Bold(true).
-			Foreground(colorRed).
-			Background(colorGray)
-		indicator := indicatorStyle.Render(lineIndicator)
-
-		theRest := bgGrayStyle.Render(fmt.Sprintf(" %s ", l.Base))
-
-		line = fmt.Sprintf("%s%s", indicator, theRest)
-	} else {
-		theRest := fmt.Sprintf(" %s ", l.Base)
-
-		line = fmt.Sprintf("%s%s", bgGrayStyle.Render(" "), theRest)
-	}
-
-	return line
 }
 
 type windowSize struct {
@@ -104,7 +80,8 @@ func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			m.moveCursorDown()
 
 		case tea.KeyEnter:
-			// todo
+			selectedPath = m.ListItems[m.CursorPos].Path
+			return m, tea.Quit
 
 		case tea.KeyTab:
 			m.toggleListStyle()
@@ -131,15 +108,14 @@ func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 func (m *model) View() string {
 	var output []string
 
-	inputArrowStyle := lipgloss.NewStyle().Bold(true).Foreground(colorBlue)
-	inputLine := fmt.Sprintf("%s %s", inputArrowStyle.Render(lineIndicator), m.InputValue)
+	inputLine := fmt.Sprintf("%s %s", inputIndicatorPart, m.InputValue)
 	output = append(output, inputLine)
 
 	// only print stuff if we know the window size or rendering gets messed up
 	if m.WindowSize != nil {
 		for i, item := range m.ListItems {
 			if i < m.WindowSize.Height-1 {
-				line := item.format(m.CursorPos == i, m.ListStyle)
+				line := m.ListStyle.format(item, m.CursorPos == i)
 				output = append(output, line)
 			}
 		}
@@ -200,12 +176,12 @@ func (m *model) toggleListStyle() {
 	}
 }
 
-func Run(debug bool) error {
+func Run(debug bool) (string, error) {
 	m := &model{
 		App: core.NewApp(debug),
 	}
 
 	program = tea.NewProgram(m, tea.WithAltScreen())
 
-	return program.Start()
+	return selectedPath, program.Start()
 }
