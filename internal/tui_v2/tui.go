@@ -21,11 +21,13 @@ type listItem struct {
 
 type model struct {
 	App               *core.Application
+	Bus               chan struct{}
 	CursorPos         int
 	ListStyle         listStyle
 	ListItems         []listItem
 	ListLastUpdatedAt int64
 	InputValue        string
+	WindowSize        tea.WindowSizeMsg
 }
 
 func pathsToListItems(paths []string) []listItem {
@@ -41,12 +43,18 @@ func pathsToListItems(paths []string) []listItem {
 }
 
 func (m *model) Init() tea.Cmd {
-	go m.App.Setup()
+	go func() {
+		m.App.Setup()
+		m.Search()
+	}()
 	return tea.Batch(tea.EnterAltScreen, tea.DisableMouse)
 }
 
 func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := message.(type) {
+	case tea.WindowSizeMsg:
+		m.WindowSize = message.(tea.WindowSizeMsg)
+
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEscape, tea.KeyCtrlC:
@@ -69,6 +77,7 @@ func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyRunes:
 			m.InputValue = fmt.Sprintf("%s%s", m.InputValue, msg.String())
 			go m.Search()
+
 		}
 	}
 
@@ -85,11 +94,13 @@ func (m *model) View() string {
 		output += "\n"
 	}
 
-	for _, item := range m.ListItems {
-		vBarStyle := lipgloss.NewStyle().Background(lipgloss.Color("#343433"))
-		line := fmt.Sprintf("%s %s", vBarStyle.Render(" "), item.Base)
-		output += line
-		output += "\n"
+	for i, item := range m.ListItems {
+		if i < (m.WindowSize.Height - 1) {
+			vBarStyle := lipgloss.NewStyle().Background(lipgloss.Color("#343433"))
+			line := fmt.Sprintf("%s %s", vBarStyle.Render(" "), item.Base)
+			output += line
+			output += "\n"
+		}
 	}
 
 	return output
@@ -127,6 +138,7 @@ func (m *model) Search() {
 func Run(debug bool) error {
 	m := &model{
 		App: core.NewApp(debug),
+		Bus: make(chan struct{}),
 	}
 
 	program = tea.NewProgram(m, tea.WithAltScreen())
