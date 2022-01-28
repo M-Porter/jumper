@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"github.com/m-porter/jumper/internal/core"
-	"github.com/m-porter/jumper/internal/tui"
+	"github.com/m-porter/jumper/internal/tui_v2"
 	"github.com/spf13/cobra"
 )
 
@@ -11,7 +10,7 @@ func ToCmd() *cobra.Command {
 		Use:   "to",
 		Short: "Display projects in an intractable list.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return tui.New(core.NewApp(runInDebugMode)).Run()
+			return tui_v2.Run()
 		},
 	}
 }

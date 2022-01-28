@@ -9,7 +9,7 @@ var (
 	ColorFgBlue    = color.HEX("#60A5FA")
 )
 
-type ListStyle uint
+type ListStyle int
 
 const (
 	ListStyleShort ListStyle = iota
