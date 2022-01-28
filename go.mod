@@ -3,16 +3,13 @@ module github.com/m-porter/jumper
 go 1.16
 
 require (
-	github.com/charmbracelet/bubbletea v0.19.3 // indirect
-	github.com/charmbracelet/lipgloss v0.4.0 // indirect
+	github.com/charmbracelet/bubbletea v0.19.3
+	github.com/charmbracelet/lipgloss v0.4.0
 	github.com/containerd/console v1.0.3 // indirect
-	github.com/gdamore/tcell/v2 v2.3.11
-	github.com/gookit/color v1.4.2
 	github.com/lithammer/fuzzysearch v1.1.2
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/muesli/ansi v0.0.0-20211031195517-c9f0611b6c70 // indirect
-	github.com/rivo/tview v0.0.0-20210608105643-d4fb0348227b
 	github.com/saracen/walker v0.1.2
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cobra v1.1.3
