@@ -2,12 +2,16 @@ package tui_v2
 
 import (
 	"fmt"
+	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/m-porter/jumper/internal/core"
 )
 
 const lineIndicator = "❯"
+
+var program *tea.Program
 
 type listItem struct {
 	Path string
@@ -16,6 +20,7 @@ type listItem struct {
 }
 
 type model struct {
+	App               *core.Application
 	CursorPos         int
 	ListStyle         listStyle
 	ListItems         []listItem
@@ -23,7 +28,20 @@ type model struct {
 	InputValue        string
 }
 
+func pathsToListItems(paths []string) []listItem {
+	var r []listItem
+	for _, path := range paths {
+		r = append(r, listItem{
+			Path: path,
+			Base: filepath.Base(path),
+			Dir:  filepath.Dir(path),
+		})
+	}
+	return r
+}
+
 func (m *model) Init() tea.Cmd {
+	go m.App.Setup()
 	return tea.Batch(tea.EnterAltScreen, tea.DisableMouse)
 }
 
@@ -50,6 +68,7 @@ func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		case tea.KeyRunes:
 			m.InputValue = fmt.Sprintf("%s%s", m.InputValue, msg.String())
+			go m.Search()
 		}
 	}
 
@@ -59,13 +78,18 @@ func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 func (m *model) View() string {
 	var output string
 
-	// output the input value line
 	{
-		inputArrowStyle := lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("9"))
+		inputArrowStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("9"))
 		inputLine := fmt.Sprintf("%s %s", inputArrowStyle.Render(lineIndicator), m.InputValue)
 		output += inputLine
+		output += "\n"
+	}
+
+	for _, item := range m.ListItems {
+		vBarStyle := lipgloss.NewStyle().Background(lipgloss.Color("#343433"))
+		line := fmt.Sprintf("%s %s", vBarStyle.Render(" "), item.Base)
+		output += line
+		output += "\n"
 	}
 
 	return output
@@ -95,10 +119,17 @@ func (m *model) MoveCursorDown() {
 	}
 }
 
-func Run() error {
-	m := &model{}
+func (m *model) Search() {
+	m.ListItems = pathsToListItems(m.App.Directories)
+	program.Send(nil)
+}
 
-	p := tea.NewProgram(m, tea.WithAltScreen())
+func Run(debug bool) error {
+	m := &model{
+		App: core.NewApp(debug),
+	}
 
-	return p.Start()
+	program = tea.NewProgram(m, tea.WithAltScreen())
+
+	return program.Start()
 }
