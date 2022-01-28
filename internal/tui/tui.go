@@ -2,233 +2,186 @@ package tui
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-	"github.com/m-porter/jumper/internal/core"
 	"github.com/m-porter/jumper/internal/lib"
-	"github.com/m-porter/jumper/internal/logger"
-	"github.com/rivo/tview"
-	"go.uber.org/zap"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/m-porter/jumper/internal/core"
 )
 
-type State struct {
+var selectedPath string
+
+var program *tea.Program
+
+type searchResultsUpdated struct{}
+
+type listItem struct {
+	Path string
+	Base string
+	Dir  string
+}
+
+type windowSize struct {
+	Height int
+	Width  int
+}
+
+type model struct {
+	App               *core.Application
 	CursorPos         int
-	ListStyle         ListStyle
-	ResultsListMaxH   int
-	ListItems         []ListItem
+	ListStyle         listStyle
+	ListItems         []listItem
 	ListLastUpdatedAt int64
+	InputValue        string
+	WindowSize        *windowSize
 }
 
-type TUI struct {
-	App    *core.Application
-	Screen *tview.Application
-	Events lib.Events
-	State  *State
-}
-
-func New(app *core.Application) *TUI {
-	return &TUI{
-		App:    app,
-		Screen: tview.NewApplication(),
-		Events: lib.EventsStream(),
-		State: &State{
-			CursorPos:         0,
-			ListStyle:         ListStyleShort,
-			ResultsListMaxH:   0,
-			ListItems:         []ListItem{},
-			ListLastUpdatedAt: 0,
-		},
+func pathsToListItems(paths []string) []listItem {
+	var r []listItem
+	for _, path := range paths {
+		r = append(r, listItem{
+			Path: path,
+			Base: filepath.Base(path),
+			Dir:  filepath.Dir(path),
+		})
 	}
+	return r
 }
 
-func (t *TUI) Run() error {
-	go t.Setup()
-
-	resultsView := tview.NewFlex()
-	go t.resultsViewUpdater(resultsView)
-
-	flex := tview.NewFlex()
-	flex.SetDirection(tview.FlexRow)
-	flex.AddItem(t.inputView(), 1, 1, true)
-	flex.AddItem(resultsView, 0, 1, false)
-
-	t.Screen.SetInputCapture(t.tuiKeyCapture)
-
-	// see https://github.com/rivo/tview/issues/270#issuecomment-485083503
-	t.Screen.SetBeforeDrawFunc(t.beforeDrawFunc)
-
-	defer t.Screen.Stop()
-	return t.Screen.SetRoot(flex, true).EnableMouse(false).Run()
+func (m *model) Init() tea.Cmd {
+	go func() {
+		m.App.Setup()
+		m.search()
+	}()
+	return tea.Batch(tea.EnterAltScreen, tea.DisableMouse)
 }
 
-func (t *TUI) Setup() {
-	t.App.Setup()  // setup the app
-	t.doSearch("") // fetch initial results from cache
-}
+func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := message.(type) {
+	case tea.WindowSizeMsg:
+		size := message.(tea.WindowSizeMsg)
+		m.WindowSize = &windowSize{
+			Height: size.Height,
+			Width:  size.Width,
+		}
 
-func (t *TUI) Stop() {
-	t.Events.Close()
-	t.Screen.Stop()
-}
+	case tea.KeyMsg:
+		switch msg.Type {
+		case tea.KeyEscape, tea.KeyCtrlC:
+			return m, tea.Quit
 
-func (t *TUI) ExitWithNoChange() {
-	t.Events.Done()
-	fmt.Print(".")
-}
+		case tea.KeyUp:
+			m.moveCursorUp()
 
-func (t *TUI) ExitWithSelected() {
-	t.Events.Done()
-	fmt.Print(t.State.ListItems[t.State.CursorPos].Path)
-}
+		case tea.KeyDown:
+			m.moveCursorDown()
 
-func (*TUI) beforeDrawFunc(screen tcell.Screen) bool {
-	screen.Clear()
-	return false
-}
+		case tea.KeyEnter:
+			selectedPath = m.ListItems[m.CursorPos].Path
+			return m, tea.Quit
 
-func (t *TUI) toggleListStyle() {
-	next := int(t.State.ListStyle) + 1
-	if next < len(ListStyles) {
-		t.State.ListStyle = ListStyles[next]
-	} else {
-		t.State.ListStyle = ListStyles[0]
-	}
+		case tea.KeyTab:
+			m.toggleListStyle()
 
-	t.Events.Update()
-}
+		case tea.KeyDelete, tea.KeyCtrlH:
+			m.InputValue = ""
+			go m.search()
 
-func (t *TUI) tuiKeyCapture(event *tcell.EventKey) *tcell.EventKey {
-	// tab to flip between list styles
-	if event.Key() == tcell.KeyTab {
-		t.toggleListStyle()
-	}
+		case tea.KeyBackspace:
+			if len(m.InputValue) > 0 {
+				m.InputValue = m.InputValue[:len(m.InputValue)-1]
+			}
+			go m.search()
 
-	// exit out
-	if event.Key() == tcell.KeyCtrlC || event.Key() == tcell.KeyEscape {
-		t.ExitWithNoChange()
-	}
-
-	// print out selected row on enter press
-	if event.Key() == tcell.KeyEnter {
-		t.ExitWithSelected()
-	}
-
-	// move cursor around
-	if event.Key() == tcell.KeyUp {
-		t.moveCursorPosUp()
-		t.Events.Update()
-	}
-	if event.Key() == tcell.KeyDown {
-		t.moveCursorPosDown()
-		t.Events.Update()
-	}
-
-	return event
-}
-
-func (t *TUI) resetCursorPos() {
-	t.State.CursorPos = 0
-}
-
-func (t *TUI) moveCursorPosUp() {
-	if t.State.CursorPos <= 0 {
-		t.State.CursorPos = 0
-	} else {
-		t.State.CursorPos--
-	}
-}
-
-func (t *TUI) moveCursorPosDown() {
-	listLen := len(t.State.ListItems) - 1
-	dirCount := len(t.App.Directories) - 1
-
-	if t.State.CursorPos >= listLen {
-		t.State.CursorPos = listLen
-	} else if t.State.CursorPos >= dirCount {
-		t.State.CursorPos = dirCount
-	} else {
-		if t.State.CursorPos >= t.State.ResultsListMaxH {
-			t.State.CursorPos = t.State.ResultsListMaxH - 1
-		} else {
-			t.State.CursorPos++
+		case tea.KeyRunes:
+			m.InputValue = fmt.Sprintf("%s%s", m.InputValue, msg.String())
+			go m.search()
 		}
 	}
+
+	return m, nil
 }
 
-func (t *TUI) resultsViewUpdater(view *tview.Flex) {
-	view.SetDirection(tview.FlexRow)
-	view.SetBackgroundColor(tcell.ColorReset)
+func (m *model) View() string {
+	var output []string
 
-	for {
-		select {
-		case evt := <-t.Events:
-			logger.Log("event received", zap.Int("event", evt))
+	inputLine := fmt.Sprintf("%s %s", inputIndicatorPart, m.InputValue)
+	output = append(output, inputLine)
 
-			switch evt {
-			case lib.EventUpdate:
-				_, _, _, height := view.GetInnerRect()
-				t.State.ResultsListMaxH = height
-
-				t.Screen.QueueUpdateDraw(func() {
-					view.Clear()
-					t.addResults(view)
-				})
-
-			case lib.EventDone:
-				t.Stop()
-				return
+	// only print stuff if we know the window size or rendering gets messed up
+	if m.WindowSize != nil {
+		for i, item := range m.ListItems {
+			if i < m.WindowSize.Height-1 {
+				line := m.ListStyle.format(item, m.CursorPos == i)
+				output = append(output, line)
 			}
 		}
 	}
+
+	return strings.Join(output, "\n")
 }
 
-func (t *TUI) addResults(view *tview.Flex) {
-	if t.State.ListLastUpdatedAt == 0 {
-		t.State.ListItems = pathsToListItems(t.App.Directories)
-		t.State.ListLastUpdatedAt = time.Now().UnixNano()
-	}
-
-	for i, item := range t.State.ListItems {
-		line := tview.NewTextView()
-		line.SetBackgroundColor(tcell.ColorReset)
-		line.SetTextColor(tcell.ColorReset)
-		line.SetDynamicColors(true)
-
-		colorize(line, item.Format(t.State.ListStyle, i == t.State.CursorPos))
-
-		view.AddItem(line, 1, 1, false)
-	}
-}
-
-func (t *TUI) doSearch(text string) {
-	var results []string
-	if text == "" {
-		results = t.App.Directories
+// moveCursorUp decrements the cursor pos value
+func (m *model) moveCursorUp() {
+	if m.CursorPos <= 0 {
+		m.CursorPos = 0
 	} else {
-		results = lib.FuzzySearchSlice(t.App.Directories, text)
-	}
-
-	now := time.Now().UnixNano()
-	if now > t.State.ListLastUpdatedAt {
-		t.State.ListItems = pathsToListItems(results)
-		t.State.ListLastUpdatedAt = now
-		t.Events.Update()
+		m.CursorPos--
 	}
 }
 
-func (t *TUI) inputView() *tview.InputField {
-	in := tview.NewInputField().
-		SetLabel("> ").
-		SetFieldBackgroundColor(tcell.ColorReset).
-		SetLabelColor(ctoc(ColorFgBlue)).
-		SetChangedFunc(func(text string) {
-			t.resetCursorPos()
-			go t.doSearch(text)
-		})
+// moveCursorDown increments the cursor pos value
+func (m *model) moveCursorDown() {
+	listLen := len(m.ListItems) - 1
 
-	in.SetBackgroundColor(tcell.ColorReset)
-	in.SetFieldTextColor(tcell.ColorReset)
+	if m.CursorPos >= listLen {
+		m.CursorPos = listLen
+	} else {
+		if m.CursorPos >= m.WindowSize.Height {
+			m.CursorPos = m.WindowSize.Height - 1
+		} else {
+			m.CursorPos++
+		}
+	}
+}
 
-	return in
+func (m *model) search() {
+	var results []string
+
+	if m.InputValue == "" {
+		results = m.App.Directories
+	} else {
+		results = lib.FuzzySearchSlice(m.App.Directories, m.InputValue)
+	}
+
+	// prevents out-of-order updates
+	now := time.Now().UnixNano()
+	if now > m.ListLastUpdatedAt {
+		m.ListItems = pathsToListItems(results)
+		m.CursorPos = 0
+
+		program.Send(searchResultsUpdated{})
+	}
+}
+
+func (m *model) toggleListStyle() {
+	next := int(m.ListStyle) + 1
+	if next < len(listStyles) {
+		m.ListStyle = listStyles[next]
+	} else {
+		m.ListStyle = listStyles[0]
+	}
+}
+
+func Run(debug bool) (string, error) {
+	m := &model{
+		App: core.NewApp(debug),
+	}
+
+	program = tea.NewProgram(m, tea.WithAltScreen())
+
+	return selectedPath, program.Start()
 }
