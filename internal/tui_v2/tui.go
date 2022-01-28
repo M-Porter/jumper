@@ -3,6 +3,10 @@ package tui_v2
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/m-porter/jumper/internal/lib"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -13,21 +17,50 @@ const lineIndicator = "❯"
 
 var program *tea.Program
 
+type searchResultsUpdated struct{}
+
 type listItem struct {
 	Path string
 	Base string
 	Dir  string
 }
 
+func (l listItem) format(selected bool, style listStyle) string {
+	bgGrayStyle := lipgloss.NewStyle().Background(colorGray).Bold(true)
+
+	var line string
+	if selected {
+		indicatorStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(colorRed).
+			Background(colorGray)
+		indicator := indicatorStyle.Render(lineIndicator)
+
+		theRest := bgGrayStyle.Render(fmt.Sprintf(" %s ", l.Base))
+
+		line = fmt.Sprintf("%s%s", indicator, theRest)
+	} else {
+		theRest := fmt.Sprintf(" %s ", l.Base)
+
+		line = fmt.Sprintf("%s%s", bgGrayStyle.Render(" "), theRest)
+	}
+
+	return line
+}
+
+type windowSize struct {
+	Height int
+	Width  int
+}
+
 type model struct {
 	App               *core.Application
-	Bus               chan struct{}
 	CursorPos         int
 	ListStyle         listStyle
 	ListItems         []listItem
 	ListLastUpdatedAt int64
 	InputValue        string
-	WindowSize        tea.WindowSizeMsg
+	WindowSize        *windowSize
 }
 
 func pathsToListItems(paths []string) []listItem {
@@ -45,7 +78,7 @@ func pathsToListItems(paths []string) []listItem {
 func (m *model) Init() tea.Cmd {
 	go func() {
 		m.App.Setup()
-		m.Search()
+		m.search()
 	}()
 	return tea.Batch(tea.EnterAltScreen, tea.DisableMouse)
 }
@@ -53,7 +86,11 @@ func (m *model) Init() tea.Cmd {
 func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := message.(type) {
 	case tea.WindowSizeMsg:
-		m.WindowSize = message.(tea.WindowSizeMsg)
+		size := message.(tea.WindowSizeMsg)
+		m.WindowSize = &windowSize{
+			Height: size.Height,
+			Width:  size.Width,
+		}
 
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -61,23 +98,30 @@ func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case tea.KeyUp:
-			m.MoveCursorUp()
+			m.moveCursorUp()
 
 		case tea.KeyDown:
-			m.MoveCursorDown()
+			m.moveCursorDown()
 
 		case tea.KeyEnter:
 			// todo
+
+		case tea.KeyTab:
+			m.toggleListStyle()
+
+		case tea.KeyDelete, tea.KeyCtrlH:
+			m.InputValue = ""
+			go m.search()
 
 		case tea.KeyBackspace:
 			if len(m.InputValue) > 0 {
 				m.InputValue = m.InputValue[:len(m.InputValue)-1]
 			}
+			go m.search()
 
 		case tea.KeyRunes:
 			m.InputValue = fmt.Sprintf("%s%s", m.InputValue, msg.String())
-			go m.Search()
-
+			go m.search()
 		}
 	}
 
@@ -85,29 +129,27 @@ func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *model) View() string {
-	var output string
+	var output []string
 
-	{
-		inputArrowStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("9"))
-		inputLine := fmt.Sprintf("%s %s", inputArrowStyle.Render(lineIndicator), m.InputValue)
-		output += inputLine
-		output += "\n"
-	}
+	inputArrowStyle := lipgloss.NewStyle().Bold(true).Foreground(colorBlue)
+	inputLine := fmt.Sprintf("%s %s", inputArrowStyle.Render(lineIndicator), m.InputValue)
+	output = append(output, inputLine)
 
-	for i, item := range m.ListItems {
-		if i < (m.WindowSize.Height - 1) {
-			vBarStyle := lipgloss.NewStyle().Background(lipgloss.Color("#343433"))
-			line := fmt.Sprintf("%s %s", vBarStyle.Render(" "), item.Base)
-			output += line
-			output += "\n"
+	// only print stuff if we know the window size or rendering gets messed up
+	if m.WindowSize != nil {
+		for i, item := range m.ListItems {
+			if i < m.WindowSize.Height-1 {
+				line := item.format(m.CursorPos == i, m.ListStyle)
+				output = append(output, line)
+			}
 		}
 	}
 
-	return output
+	return strings.Join(output, "\n")
 }
 
-// MoveCursorUp decrements the cursor pos value
-func (m *model) MoveCursorUp() {
+// moveCursorUp decrements the cursor pos value
+func (m *model) moveCursorUp() {
 	if m.CursorPos <= 0 {
 		m.CursorPos = 0
 	} else {
@@ -115,30 +157,52 @@ func (m *model) MoveCursorUp() {
 	}
 }
 
-// MoveCursorDown increments the cursor pos value
-func (m *model) MoveCursorDown() {
+// moveCursorDown increments the cursor pos value
+func (m *model) moveCursorDown() {
 	listLen := len(m.ListItems) - 1
 
 	if m.CursorPos >= listLen {
 		m.CursorPos = listLen
 	} else {
-		//if m.CursorPos >= m.ResultsListMaxH {
-		//	m.CursorPos = m.ResultsListMaxH - 1
-		//} else {
-		//	m.CursorPos++
-		//}
+		if m.CursorPos >= m.WindowSize.Height {
+			m.CursorPos = m.WindowSize.Height - 1
+		} else {
+			m.CursorPos++
+		}
 	}
 }
 
-func (m *model) Search() {
-	m.ListItems = pathsToListItems(m.App.Directories)
-	program.Send(nil)
+func (m *model) search() {
+	var results []string
+
+	if m.InputValue == "" {
+		results = m.App.Directories
+	} else {
+		results = lib.FuzzySearchSlice(m.App.Directories, m.InputValue)
+	}
+
+	// prevents out-of-order updates
+	now := time.Now().UnixNano()
+	if now > m.ListLastUpdatedAt {
+		m.ListItems = pathsToListItems(results)
+		m.CursorPos = 0
+
+		program.Send(searchResultsUpdated{})
+	}
+}
+
+func (m *model) toggleListStyle() {
+	next := int(m.ListStyle) + 1
+	if next < len(listStyles) {
+		m.ListStyle = listStyles[next]
+	} else {
+		m.ListStyle = listStyles[0]
+	}
 }
 
 func Run(debug bool) error {
 	m := &model{
 		App: core.NewApp(debug),
-		Bus: make(chan struct{}),
 	}
 
 	program = tea.NewProgram(m, tea.WithAltScreen())

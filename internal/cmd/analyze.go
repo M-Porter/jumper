@@ -8,7 +8,7 @@ import (
 func AnalyzeCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "analyze",
-		Short: "Search for and cache projects",
+		Short: "search for and cache projects",
 		Run: func(cmd *cobra.Command, args []string) {
 			app := core.NewApp(runInDebugMode)
 			app.Setup()
