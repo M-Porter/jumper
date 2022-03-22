@@ -176,9 +176,10 @@ func (m *model) toggleListStyle() {
 	}
 }
 
-func Run(debug bool) (string, error) {
+func Run(debug bool, startingQuery string) (string, error) {
 	m := &model{
-		App: core.NewApp(debug),
+		App:        core.NewApp(debug),
+		InputValue: startingQuery,
 	}
 
 	program = tea.NewProgram(m, tea.WithAltScreen())

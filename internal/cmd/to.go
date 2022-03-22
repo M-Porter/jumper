@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/m-porter/jumper/internal/tui"
 	"github.com/spf13/cobra"
@@ -9,10 +10,11 @@ import (
 
 func ToCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "to",
+		Use:   "to [query]",
+		Args:  cobra.ArbitraryArgs,
 		Short: "Display projects in an intractable list.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			path, err := tui.Run(runInDebugMode)
+			path, err := tui.Run(runInDebugMode, strings.Join(args, " "))
 
 			if err != nil {
 				return err
