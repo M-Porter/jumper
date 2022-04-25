@@ -5,12 +5,12 @@ go 1.16
 require (
 	github.com/charmbracelet/bubbletea v0.20.0 // indirect
 	github.com/charmbracelet/lipgloss v0.4.0
-	github.com/gdamore/tcell/v2 v2.5.1 // indirect
+	github.com/gdamore/tcell/v2 v2.5.1
 	github.com/lithammer/fuzzysearch v1.1.2
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/muesli/ansi v0.0.0-20211031195517-c9f0611b6c70 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8 // indirect
+	github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8
 	github.com/saracen/walker v0.1.2
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cobra v1.1.3

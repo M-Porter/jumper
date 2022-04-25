@@ -40,27 +40,27 @@ func (s *state) cycleListStyle() {
 	}
 }
 
-func (m *state) moveCursorDown() {
-	listLen := len(m.ListItems) - 1
-	if m.CursorPos >= listLen {
-		m.CursorPos = listLen
-	} else if m.CursorPos >= m.WindowHeight {
-		m.CursorPos = m.WindowHeight - 1
+func (s *state) moveCursorDown() {
+	listLen := len(s.ListItems) - 1
+	if s.CursorPos >= listLen {
+		s.CursorPos = listLen
+	} else if s.CursorPos >= s.WindowHeight {
+		s.CursorPos = s.WindowHeight - 1
 	} else {
-		m.CursorPos++
+		s.CursorPos++
 	}
 }
 
-func (m *state) moveCursorUp() {
-	if m.CursorPos <= 0 {
-		m.CursorPos = 0
+func (s *state) moveCursorUp() {
+	if s.CursorPos <= 0 {
+		s.CursorPos = 0
 	} else {
-		m.CursorPos--
+		s.CursorPos--
 	}
 }
 
-func (m *state) resetCursorPos() {
-	m.CursorPos = 0
+func (s *state) resetCursorPos() {
+	s.CursorPos = 0
 }
 
 type TUI struct {
@@ -79,13 +79,17 @@ type listItem struct {
 }
 
 func Run(debug bool, startingQuery string) (string, error) {
+	app := core.NewApp(debug)
+
 	m := &state{
-		ListStyle:  listStyleShort,
-		InputValue: startingQuery,
+		ListStyle:         listStyleShort,
+		InputValue:        startingQuery,
+		ListItems:         pathsToListItems(app.Directories),
+		ListLastUpdatedAt: time.Now().UnixNano(),
 	}
 
 	tui := &TUI{
-		App:    core.NewApp(debug),
+		App:    app,
 		Screen: tview.NewApplication(),
 		Events: lib.EventsStream(),
 		State:  m,
@@ -192,31 +196,24 @@ func (t *TUI) resultsViewUpdater(view *tview.Flex) {
 	view.SetBackgroundColor(tcell.ColorReset)
 
 	for {
-		select {
-		case evt := <-t.Events:
-			switch evt {
-			case lib.EventUpdate:
-				_, _, _, height := view.GetInnerRect()
-				t.State.WindowHeight = height
-				t.Screen.QueueUpdateDraw(func() {
-					view.Clear()
-					t.addResults(view)
-				})
-			case lib.EventDone:
-				t.Events.Close()
-				t.Screen.Stop()
-				return
-			}
+		evt := <-t.Events
+		switch evt {
+		case lib.EventUpdate:
+			_, _, _, height := view.GetInnerRect()
+			t.State.WindowHeight = height
+			t.Screen.QueueUpdateDraw(func() {
+				view.Clear()
+				t.addResults(view)
+			})
+		case lib.EventDone:
+			t.Events.Close()
+			t.Screen.Stop()
+			return
 		}
 	}
 }
 
 func (t *TUI) addResults(view *tview.Flex) {
-	if t.State.ListLastUpdatedAt == 0 {
-		t.State.ListItems = pathsToListItems(t.App.Directories)
-		t.State.ListLastUpdatedAt = time.Now().UnixNano()
-	}
-
 	for i, item := range t.State.ListItems {
 		line := tview.NewTextView()
 		line.SetBackgroundColor(tcell.ColorReset)
