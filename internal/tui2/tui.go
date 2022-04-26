@@ -1,6 +1,7 @@
 package tui2
 
 import (
+	"fmt"
 	"path/filepath"
 	"time"
 
@@ -133,26 +134,31 @@ func (t *TUI) inputCaptureFunc(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyCtrlC || event.Key() == tcell.KeyEscape {
 		t.Events.Done()
 		selectedPath = "."
+		return nil
 	}
 
 	if event.Key() == tcell.KeyEnter {
 		t.Events.Done()
 		selectedPath = t.State.ListItems[t.State.CursorPos].Path
+		return nil
 	}
 
 	if event.Key() == tcell.KeyTab {
 		t.State.cycleListStyle()
 		t.Events.Update()
+		return nil
 	}
 
 	if event.Key() == tcell.KeyDown {
 		t.State.moveCursorDown()
 		t.Events.Update()
+		return nil
 	}
 
 	if event.Key() == tcell.KeyUp {
 		t.State.moveCursorUp()
 		t.Events.Update()
+		return nil
 	}
 
 	return event
@@ -197,6 +203,7 @@ func (t *TUI) resultsViewUpdater(view *tview.Flex) {
 
 	for {
 		evt := <-t.Events
+
 		switch evt {
 		case lib.EventUpdate:
 			_, _, _, height := view.GetInnerRect()
@@ -205,6 +212,7 @@ func (t *TUI) resultsViewUpdater(view *tview.Flex) {
 				view.Clear()
 				t.addResults(view)
 			})
+
 		case lib.EventDone:
 			t.Events.Close()
 			t.Screen.Stop()
@@ -214,13 +222,16 @@ func (t *TUI) resultsViewUpdater(view *tview.Flex) {
 }
 
 func (t *TUI) addResults(view *tview.Flex) {
+	line := tview.NewTextView()
+	line.SetBackgroundColor(tcell.ColorReset)
+	line.SetTextColor(tcell.ColorReset)
+	line.SetDynamicColors(true)
+
+	label := ""
 	for i, item := range t.State.ListItems {
-		line := tview.NewTextView()
-		line.SetBackgroundColor(tcell.ColorReset)
-		line.SetTextColor(tcell.ColorReset)
-		line.SetDynamicColors(true)
-		label := t.State.ListStyle.format(item, i == t.State.CursorPos)
-		_, _ = tview.ANSIWriter(line).Write([]byte(label))
-		view.AddItem(line, 1, 1, false)
+		label = fmt.Sprintf("%s%s\n", label, t.State.ListStyle.format(item, i == t.State.CursorPos))
 	}
+
+	_, _ = tview.ANSIWriter(line).Write([]byte(label))
+	view.AddItem(line, 0, 1, false)
 }
