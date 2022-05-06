@@ -22,8 +22,11 @@ The most effective way to use jumper is by making a bash function which combines
 ```shell
 j() {
   local f
+  local where
   f="$(mktemp)"
   jumper to "$1" --out="$f"
-  cd "$(cat "$f")" || return
+  where="$(cat "$f")"
+  rm -f "$f"
+  cd "$where" || return
 }
 ```
