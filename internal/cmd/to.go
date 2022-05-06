@@ -31,7 +31,6 @@ func ToCmd() *cobra.Command {
 			case "", "stdout":
 				fmt.Fprintln(os.Stdout, path)
 			default:
-				fmt.Fprintln(os.Stdout, path)
 				err = writeToFile(out, path)
 			}
 
