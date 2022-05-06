@@ -12,9 +12,13 @@ import (
 	"github.com/m-porter/jumper/internal/core"
 )
 
-var selectedPath string
+var selectedPath = "."
 
 var program *tea.Program
+
+type Options struct {
+	StartingQuery string
+}
 
 type searchResultsUpdated struct{}
 
@@ -176,10 +180,10 @@ func (m *model) toggleListStyle() {
 	}
 }
 
-func Run(debug bool, startingQuery string) (string, error) {
+func Run(opts Options) (string, error) {
 	m := &model{
-		App:        core.NewApp(debug),
-		InputValue: startingQuery,
+		App:        core.NewApp(),
+		InputValue: opts.StartingQuery,
 	}
 
 	program = tea.NewProgram(m, tea.WithAltScreen())

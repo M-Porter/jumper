@@ -5,6 +5,12 @@ Quickly jump to your project directories.
 ## Installation
 
 ```
+brew install m-porter/tap/jumper
+```
+
+OR
+
+```
 go install github.com/m-porter/jumper@main
 ```
 
@@ -15,6 +21,8 @@ The most effective way to use jumper is by making a bash function which combines
 
 ```shell
 j() {
-    cd "$(jumper to "${@}")" || return
+  local f="$(mktemp)"
+  jumper to --out="$f"
+  cd "$(cat "$f")" || return
 }
 ```

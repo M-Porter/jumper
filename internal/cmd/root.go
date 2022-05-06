@@ -6,10 +6,6 @@ import (
 	"github.com/m-porter/jumper/internal/logger"
 )
 
-var (
-	runInDebugMode bool
-)
-
 func RootCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "jumper",

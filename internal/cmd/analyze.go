@@ -10,7 +10,7 @@ func AnalyzeCommand() *cobra.Command {
 		Use:   "analyze",
 		Short: "search for and cache projects",
 		Run: func(cmd *cobra.Command, args []string) {
-			app := core.NewApp(runInDebugMode)
+			app := core.NewApp()
 			app.Setup()
 			app.Analyze()
 		},

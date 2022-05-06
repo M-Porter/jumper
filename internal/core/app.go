@@ -125,7 +125,7 @@ func canSearchDeeper(path string) bool {
 	return len(strings.Split(filepath.Dir(path), string(filepath.Separator))) <= config.C.SearchMaxDepth
 }
 
-func NewApp(debug bool) *Application {
+func NewApp() *Application {
 	return &Application{
 		Directories: []string{},
 	}
