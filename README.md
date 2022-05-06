@@ -21,8 +21,9 @@ The most effective way to use jumper is by making a bash function which combines
 
 ```shell
 j() {
-  local f="$(mktemp)"
-  jumper to --out="$f"
+  local f
+  f="$(mktemp)"
+  jumper to "$1" --out="$f"
   cd "$(cat "$f")" || return
 }
 ```
