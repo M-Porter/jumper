@@ -8,7 +8,7 @@ import (
 
 func FuzzySearchSlice(data []string, term string) []string {
 	matches := fuzzy.RankFindNormalizedFold(term, data)
-	sort.Stable(matches)
+	sort.Sort(matches)
 	var results []string
 	for _, match := range matches {
 		results = append(results, match.Target)

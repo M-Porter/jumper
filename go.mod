@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/charmbracelet/bubbletea v0.20.0
 	github.com/charmbracelet/lipgloss v0.4.0
-	github.com/lithammer/fuzzysearch v1.1.2
+	github.com/lithammer/fuzzysearch v1.1.5
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/muesli/ansi v0.0.0-20211031195517-c9f0611b6c70 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
