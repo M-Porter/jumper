@@ -10,12 +10,12 @@ var (
 	lineIndicator = "❯"
 
 	colorZinc700 = lipgloss.AdaptiveColor{
-		Light: "#D4D4D8", // zinc 300
-		Dark:  "#3F3F46", // zinc 700
+		Light: "#D4D4D8", // tailwind zinc 300
+		Dark:  "#3F3F46", // tailwind zinc 700
 	}
 	colorZinc500 = lipgloss.AdaptiveColor{
-		Light: "#71717A", // zinc 400
-		Dark:  "#71717A", // zinc 500
+		Light: "#71717A", // tailwind zinc 400
+		Dark:  "#71717A", // tailwind zinc 500
 	}
 	colorRed  = lipgloss.Color("#EF4444")
 	colorBlue = lipgloss.Color("#0EA5E9")
