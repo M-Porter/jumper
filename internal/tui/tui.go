@@ -115,10 +115,13 @@ func (m *model) View() string {
 	inputLine := fmt.Sprintf("%s %s", inputIndicatorPart, m.InputValue)
 	output = append(output, inputLine)
 
+	countLine := fmt.Sprintf("  %d / %d", len(m.ListItems), len(m.App.Directories))
+	output = append(output, detailDimStyle.Render(countLine))
+
 	// only print stuff if we know the window size or rendering gets messed up
 	if m.WindowSize != nil {
 		for i, item := range m.ListItems {
-			if i < m.WindowSize.Height-1 {
+			if i < m.WindowSize.Height-2 {
 				line := m.ListStyle.format(item, m.CursorPos == i)
 				output = append(output, line)
 			}
