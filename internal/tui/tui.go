@@ -115,10 +115,13 @@ func (m *model) View() string {
 	inputLine := fmt.Sprintf("%s %s", inputIndicatorPart, m.InputValue)
 	output = append(output, inputLine)
 
+	countLine := fmt.Sprintf("  %d / %d", len(m.ListItems), len(m.App.Directories))
+	output = append(output, detailDimStyle.Render(countLine))
+
 	// only print stuff if we know the window size or rendering gets messed up
 	if m.WindowSize != nil {
 		for i, item := range m.ListItems {
-			if i < m.WindowSize.Height-1 {
+			if i < m.WindowSize.Height-2 {
 				line := m.ListStyle.format(item, m.CursorPos == i)
 				output = append(output, line)
 			}
@@ -158,7 +161,11 @@ func (m *model) search() {
 	if m.InputValue == "" {
 		results = m.App.Directories
 	} else {
-		results = lib.FuzzySearchSlice(m.App.Directories, m.InputValue)
+		var bases []string
+		for _, d := range m.App.Directories {
+			bases = append(bases, filepath.Base(d))
+		}
+		results = lib.FuzzySearchSlice(bases, m.InputValue)
 	}
 
 	// prevents out-of-order updates
