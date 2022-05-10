@@ -6,16 +6,20 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-const lineIndicator = "❯"
-
-const (
-	colorZinc700 = lipgloss.Color("#3F3F46")
-	colorZinc500 = lipgloss.Color("#71717A")
-	colorRed     = lipgloss.Color("#EF4444")
-	colorBlue    = lipgloss.Color("#0EA5E9")
-)
-
 var (
+	lineIndicator = "❯"
+
+	colorZinc700 = lipgloss.AdaptiveColor{
+		Light: "#D4D4D8", // zinc 300
+		Dark:  "#3F3F46", // zinc 700
+	}
+	colorZinc500 = lipgloss.AdaptiveColor{
+		Light: "#71717A", // zinc 400
+		Dark:  "#71717A", // zinc 500
+	}
+	colorRed  = lipgloss.Color("#EF4444")
+	colorBlue = lipgloss.Color("#0EA5E9")
+
 	bgGrayStyle          = lipgloss.NewStyle().Background(colorZinc700).Bold(true)
 	indicatorStyle       = lipgloss.NewStyle().Bold(true).Foreground(colorRed).Background(colorZinc700)
 	detailDimStyleBgGray = lipgloss.NewStyle().Bold(true).Foreground(colorZinc500).Background(colorZinc700)
