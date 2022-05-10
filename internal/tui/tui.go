@@ -161,11 +161,7 @@ func (m *model) search() {
 	if m.InputValue == "" {
 		results = m.App.Directories
 	} else {
-		var bases []string
-		for _, d := range m.App.Directories {
-			bases = append(bases, filepath.Base(d))
-		}
-		results = lib.FuzzySearchSlice(bases, m.InputValue)
+		results = lib.FuzzySearchSlice(m.App.Directories, m.InputValue)
 	}
 
 	// prevents out-of-order updates
