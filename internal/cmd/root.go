@@ -6,10 +6,18 @@ import (
 	"github.com/m-porter/jumper/internal/logger"
 )
 
-func RootCmd() *cobra.Command {
+type RootCmdOptions struct {
+	Version string
+	Commit  string
+	Date    string
+	BuiltBy string
+}
+
+func RootCmd(options RootCmdOptions) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "jumper",
-		Short: "Seamlessly jump between projects on your machine",
+		Use:     "jumper",
+		Short:   "Seamlessly jump between projects on your machine",
+		Version: options.Version,
 	}
 
 	cmd.PersistentFlags().BoolVar(&logger.Debug, "debug", false, "Run jumper in debug mode")
@@ -19,6 +27,7 @@ func RootCmd() *cobra.Command {
 		AnalyzeCommand(),
 		ClearCmd(),
 		SetupCmd(),
+		VersionCmd(options),
 	)
 
 	return cmd

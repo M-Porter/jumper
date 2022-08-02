@@ -15,8 +15,9 @@ import (
 )
 
 type Application struct {
-	Directories []string
-	Cache       *Cache
+	Directories         []string
+	Cache               *Cache
+	cacheUpdateCallback func()
 }
 
 func (a *Application) Setup() {
@@ -26,15 +27,11 @@ func (a *Application) Setup() {
 	} else {
 		cobra.CheckErr(err)
 		if isStale {
+			logger.Log("updating stale cache")
 			a.Analyze()
 		}
 	}
-
-	c, err := readFromCache(config.C.CacheFileFullPath)
-	if c != nil {
-		a.Directories = c.Directories
-		a.Cache = c
-	}
+	a.readFromCache()
 }
 
 func (a *Application) Analyze() {
@@ -118,6 +115,31 @@ func (a *Application) Analyze() {
 	if err != nil {
 		logger.Log("failed writing to cache")
 		cobra.CheckErr(err)
+	}
+
+	a.emitCacheUpdateEvent()
+}
+
+func (a *Application) SetCacheUpdateCallback(callback func()) {
+	a.cacheUpdateCallback = callback
+}
+
+func (a *Application) emitCacheUpdateEvent() {
+	logger.Log("emitting cache update callback")
+	a.readFromCache()
+	if a.cacheUpdateCallback != nil {
+		a.cacheUpdateCallback()
+	}
+}
+
+func (a *Application) readFromCache() {
+	c, err := readFromCache(config.C.CacheFileFullPath)
+	if err != nil {
+		cobra.CheckErr(err)
+	}
+	if c != nil {
+		a.Directories = c.Directories
+		a.Cache = c
 	}
 }
 

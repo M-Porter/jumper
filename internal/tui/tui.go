@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/m-porter/jumper/internal/lib"
+	"github.com/m-porter/jumper/internal/logger"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/m-porter/jumper/internal/core"
@@ -20,7 +21,11 @@ type Options struct {
 	StartingQuery string
 }
 
-type searchResultsUpdated struct{}
+type programEvent struct{}
+
+type searchResultsUpdatedEvent programEvent
+
+type cacheUpdatedEvent programEvent
 
 type listItem struct {
 	Path string
@@ -65,6 +70,13 @@ func (m *model) Init() tea.Cmd {
 
 func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := message.(type) {
+	case searchResultsUpdatedEvent:
+		logger.Log("searchResultsUpdatedEvent recieved")
+		return m, nil
+	case cacheUpdatedEvent:
+		logger.Log("cacheUpdatedEvent recieved")
+		return m, nil
+
 	case tea.WindowSizeMsg:
 		size := message.(tea.WindowSizeMsg)
 		m.WindowSize = &windowSize{
@@ -170,7 +182,7 @@ func (m *model) search() {
 		m.ListItems = pathsToListItems(results)
 		m.CursorPos = 0
 
-		program.Send(searchResultsUpdated{})
+		program.Send(searchResultsUpdatedEvent{})
 	}
 }
 
@@ -184,12 +196,18 @@ func (m *model) toggleListStyle() {
 }
 
 func Run(opts Options) (string, error) {
+	app := core.NewApp()
+
 	m := &model{
-		App:        core.NewApp(),
+		App:        app,
 		InputValue: opts.StartingQuery,
 	}
 
 	program = tea.NewProgram(m, tea.WithAltScreen())
+
+	app.SetCacheUpdateCallback(func() {
+		program.Send(cacheUpdatedEvent{})
+	})
 
 	return selectedPath, program.Start()
 }
