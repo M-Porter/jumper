@@ -1,6 +1,9 @@
 package lib
 
 import (
+	"errors"
+	"os"
+	"os/exec"
 	"regexp"
 	"strings"
 )
@@ -34,4 +37,27 @@ func AbsValue[V float64](val V) V {
 		return -val
 	}
 	return val
+}
+
+func OpenEditor(filePath string) error {
+	var editorCmd *exec.Cmd
+
+	if editor := os.Getenv("EDITOR"); editor != "" {
+		editorCmd = exec.Command(editor, filePath)
+	} else {
+		editorCmd = exec.Command("which", "vim", "nano")
+		editorCmd.Stdin = os.Stdin
+		out, err := editorCmd.Output()
+		if err != nil {
+			return errors.New("could not determine which editor to use")
+		}
+		e := strings.Split(string(out), "\n")[0]
+		editorCmd = exec.Command(e, filePath)
+	}
+
+	editorCmd.Stdin = os.Stdin
+	editorCmd.Stdout = os.Stdout
+	editorCmd.Stderr = os.Stderr
+
+	return editorCmd.Run()
 }
