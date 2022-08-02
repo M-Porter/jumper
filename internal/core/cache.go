@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 	"time"
+
+	"github.com/m-porter/jumper/internal/lib"
 )
 
 const (
@@ -27,7 +29,8 @@ func isCacheStale(fromPath string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return c.LastUpdate.Sub(time.Now().UTC()).Seconds() > staleCacheTime.Seconds(), nil
+	diff := lib.AbsValue(c.LastUpdate.Sub(time.Now().UTC()).Seconds())
+	return diff > staleCacheTime.Seconds(), nil
 }
 
 func writeToCache(path string, dirs []string) error {
@@ -65,7 +68,7 @@ func readFromCache(path string) (*Cache, error) {
 
 	c, err := decodeList(bf)
 	if err != nil {
-		// todo - delete the cache file and start over
+		return nil, err
 	}
 	return c, nil
 }

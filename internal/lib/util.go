@@ -28,3 +28,10 @@ func RemoveDuplicates(dirs []string) []string {
 	}
 	return r
 }
+
+func AbsValue[V float64](val V) V {
+	if val < 0 {
+		return -val
+	}
+	return val
+}
