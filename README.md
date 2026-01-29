@@ -27,6 +27,6 @@ j() {
   jumper to "$1" --out="$f"
   where="$(cat "$f")"
   rm -f "$f"
-  cd "$where" || return
+  cd "$(realpath "$where")" || return
 }
 ```
