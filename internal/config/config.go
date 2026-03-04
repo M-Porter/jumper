@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
@@ -35,13 +37,26 @@ type configFromFile struct {
 	SearchMaxDepth int `mapstructure:"search_max_depth"`
 }
 
-var C *Config = nil
+var config *Config = nil
+
+func HomeDir() string {
+	hd, err := homedir.Dir()
+	cobra.CheckErr(err)
+	return hd
+}
 
 func Filepath() string {
 	return filepath.Join(HomeDir(), JumperDirname, fmt.Sprintf("%s.%s", Filename, Type))
 }
 
-func Init() {
+func Get() Config {
+	if config == nil {
+		initialize()
+	}
+	return *config
+}
+
+func initialize() {
 	hd := HomeDir()
 
 	configDirFull := filepath.Join(hd, JumperDirname)
@@ -61,7 +76,8 @@ func Init() {
 	viper.SetDefault("search_max_depth", defaultSearchMaxDepth)
 
 	err := viper.SafeWriteConfig()
-	if _, ok := err.(viper.ConfigFileAlreadyExistsError); ok {
+	var configFileAlreadyExistsError viper.ConfigFileAlreadyExistsError
+	if errors.As(err, &configFileAlreadyExistsError) {
 		// ignore, this is ok. just means the config already exists, so
 		// we don't need to write a new one
 	} else {
@@ -80,8 +96,8 @@ func Init() {
 	err = viper.WriteConfig()
 	cobra.CheckErr(err)
 
-	// copy internalConf to C
-	C = &Config{
+	// copy internalConf to config
+	config = &Config{
 		HomeDir:        hd,
 		SearchIncludes: internalConf.SearchIncludes,
 		SearchExcludes: internalConf.SearchExcludes,
@@ -89,17 +105,56 @@ func Init() {
 		SearchMaxDepth: internalConf.SearchMaxDepth,
 	}
 
-	C.CacheFileFullPath = filepath.Join(C.HomeDir, JumperDirname, C.CacheFile)
-	C.JumperDir = filepath.Join(C.HomeDir, JumperDirname)
+	config.CacheFileFullPath = filepath.Join(config.HomeDir, JumperDirname, config.CacheFile)
+	config.JumperDir = filepath.Join(config.HomeDir, JumperDirname)
 
 	for _, pathStop := range internalConf.SearchPathStops {
 		pathStopRegexp := regexp.MustCompile(fmt.Sprintf("%s$", regexp.QuoteMeta(pathStop)))
-		C.SearchPathStops = append(C.SearchPathStops, pathStopRegexp)
+		config.SearchPathStops = append(config.SearchPathStops, pathStopRegexp)
 	}
 }
 
-func HomeDir() string {
-	hd, err := homedir.Dir()
+func (c *Config) Save() {
+	hd := HomeDir()
+
+	internalConf := c.toInternalConfig()
+
+	configDirFull := filepath.Join(hd, JumperDirname)
+	if _, err := os.Stat(configDirFull); os.IsNotExist(err) {
+		err := os.MkdirAll(configDirFull, os.ModePerm)
+		cobra.CheckErr(err)
+	}
+
+	out, err := yaml.Marshal(internalConf)
 	cobra.CheckErr(err)
-	return hd
+
+	fo, err := os.Open(Filepath())
+	cobra.CheckErr(err)
+	defer func() {
+		cobra.CheckErr(fo.Close())
+	}()
+
+	_, err = fo.Write(out)
+	cobra.CheckErr(err)
+
+	config = c
+}
+
+func (ic *configFromFile) ToConfig() Config {
+	return Config{
+		HomeDir:        HomeDir(),
+		SearchIncludes: ic.SearchIncludes,
+		SearchExcludes: ic.SearchExcludes,
+		CacheFile:      ic.CacheFile,
+		SearchMaxDepth: ic.SearchMaxDepth,
+	}
+}
+
+func (c *Config) toInternalConfig() configFromFile {
+	return configFromFile{
+		CacheFile:      c.CacheFile,
+		SearchIncludes: c.SearchIncludes,
+		SearchExcludes: c.SearchExcludes,
+		SearchMaxDepth: c.SearchMaxDepth,
+	}
 }

@@ -6,7 +6,6 @@ import (
 
 	"github.com/m-porter/jumper/internal/cmd"
 	"github.com/m-porter/jumper/internal/config"
-	"github.com/spf13/cobra"
 )
 
 // set by goreleaser ldflags at build time
@@ -21,8 +20,6 @@ var date = "development"
 var builtBy = "development"
 
 func main() {
-	cobra.OnInitialize(config.Init)
-
 	rootCmd := cmd.RootCmd(cmd.RootCmdOptions{
 		Version: version,
 		Commit:  commit,
@@ -34,4 +31,8 @@ func main() {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func init() {
+	config.Get()
 }
