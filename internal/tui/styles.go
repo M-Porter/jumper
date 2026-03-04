@@ -9,22 +9,34 @@ import (
 var (
 	lineIndicator = "❯"
 
-	colorZinc700 = lipgloss.AdaptiveColor{
-		Light: "#D4D4D8", // tailwind zinc 300
-		Dark:  "#3F3F46", // tailwind zinc 700
+	// https://catppuccin.com/palette/
+	colorSurface1 = lipgloss.AdaptiveColor{
+		Light: "#bcc0cc",
+		Dark:  "#45475a",
 	}
-	colorZinc500 = lipgloss.AdaptiveColor{
-		Light: "#71717A", // tailwind zinc 400
-		Dark:  "#71717A", // tailwind zinc 500
+	colorMaroon = lipgloss.AdaptiveColor{
+		Light: "#e64553",
+		Dark:  "#eba0ac",
 	}
-	colorRed  = lipgloss.Color("#EF4444")
-	colorBlue = lipgloss.Color("#0EA5E9")
+	colorLavender = lipgloss.AdaptiveColor{
+		Light: "#7287fd",
+		Dark:  "#b4befe",
+	}
+	colorText = lipgloss.AdaptiveColor{
+		Light: "#4c4f69",
+		Dark:  "#cdd6f4",
+	}
+	colorSubtext0 = lipgloss.AdaptiveColor{
+		Light: "#6c6f85",
+		Dark:  "#a6adc8",
+	}
 
-	bgGrayStyle          = lipgloss.NewStyle().Background(colorZinc700).Bold(true)
-	indicatorStyle       = lipgloss.NewStyle().Bold(true).Foreground(colorRed).Background(colorZinc700)
-	detailDimStyleBgGray = lipgloss.NewStyle().Bold(true).Foreground(colorZinc500).Background(colorZinc700)
-	detailDimStyle       = lipgloss.NewStyle().Foreground(colorZinc500)
-	inputArrowStyle      = lipgloss.NewStyle().Bold(true).Foreground(colorBlue)
+	bgGrayStyle          = lipgloss.NewStyle().Background(colorSurface1).Bold(true)
+	indicatorStyle       = lipgloss.NewStyle().Bold(true).Foreground(colorMaroon).Background(colorSurface1)
+	detailDimStyleBgGray = lipgloss.NewStyle().Bold(true).Foreground(colorSubtext0).Background(colorSurface1)
+	detailDimStyle       = lipgloss.NewStyle().Foreground(colorSubtext0)
+	inputArrowStyle      = lipgloss.NewStyle().Bold(true).Foreground(colorLavender)
+	textStyle            = lipgloss.NewStyle().Foreground(colorText)
 
 	selectedRowIndicatorPart = indicatorStyle.Render(lineIndicator)
 	inputIndicatorPart       = inputArrowStyle.Render(lineIndicator)
@@ -59,12 +71,11 @@ func (ls listStyle) format(item listItem, selected bool) string {
 func formatListStyleShort(item listItem, selected bool) string {
 	var line string
 
+	baseInfoPart := textStyle.Render(fmt.Sprintf(" %s ", item.Base))
 	if selected {
-		infoPart := bgGrayStyle.Render(fmt.Sprintf(" %s ", item.Base))
-		line = fmt.Sprintf("%s%s", selectedRowIndicatorPart, infoPart)
+		line = fmt.Sprintf("%s%s", selectedRowIndicatorPart, bgGrayStyle.Render(baseInfoPart))
 	} else {
-		infoPart := fmt.Sprintf(" %s ", item.Base)
-		line = fmt.Sprintf("%s%s", beamPart, infoPart)
+		line = fmt.Sprintf("%s%s", beamPart, baseInfoPart)
 	}
 
 	return line
