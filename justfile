@@ -14,3 +14,12 @@ release version:
         git push origin "{{version}}"
     fi
     goreleaser release --rm-dist
+
+build:
+    go build
+
+clean:
+    go clean
+
+run cmd:
+    go run . {{cmd}}
