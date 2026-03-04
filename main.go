@@ -12,8 +12,9 @@ import (
 // set by goreleaser ldflags at build time
 //
 // test locally with:
-//    GORELEASER_CURRENT_TAG=v4.2.0 goreleaser build --single-target --snapshot --rm-dist
-//    ./dist/jumper_{os}_{arch}_v1/jumper version
+//
+//	GORELEASER_CURRENT_TAG=v4.2.0 goreleaser build --single-target --snapshot --rm-dist
+//	./dist/jumper_{os}_{arch}_v1/jumper version
 var version = "development"
 var commit = "development"
 var date = "development"
