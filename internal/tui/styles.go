@@ -18,9 +18,9 @@ func initIndicators(indicator string) {
 
 var (
 	// https://catppuccin.com/palette/
-	colorSurface1 = lipgloss.AdaptiveColor{
-		Light: "#bcc0cc",
-		Dark:  "#45475a",
+	colorSurface0 = lipgloss.AdaptiveColor{
+		Light: "#ccd0da",
+		Dark:  "#313244",
 	}
 	colorMaroon = lipgloss.AdaptiveColor{
 		Light: "#e64553",
@@ -34,15 +34,15 @@ var (
 		Light: "#4c4f69",
 		Dark:  "#cdd6f4",
 	}
-	colorSubtext0 = lipgloss.AdaptiveColor{
-		Light: "#6c6f85",
-		Dark:  "#a6adc8",
+	colorOverlay2 = lipgloss.AdaptiveColor{
+		Light: "#7c7f93",
+		Dark:  "#9399b2",
 	}
 
-	bgGrayStyle          = lipgloss.NewStyle().Background(colorSurface1).Bold(true)
-	indicatorStyle       = lipgloss.NewStyle().Bold(true).Foreground(colorMaroon).Background(colorSurface1)
-	detailDimStyleBgGray = lipgloss.NewStyle().Bold(true).Foreground(colorSubtext0).Background(colorSurface1)
-	detailDimStyle       = lipgloss.NewStyle().Foreground(colorSubtext0)
+	bgGrayStyle          = lipgloss.NewStyle().Background(colorSurface0).Bold(true)
+	indicatorStyle       = lipgloss.NewStyle().Bold(true).Foreground(colorMaroon).Background(colorSurface0)
+	detailDimStyleBgGray = lipgloss.NewStyle().Bold(true).Foreground(colorOverlay2).Background(colorSurface0)
+	detailDimStyle       = lipgloss.NewStyle().Foreground(colorOverlay2)
 	inputArrowStyle      = lipgloss.NewStyle().Bold(true).Foreground(colorLavender)
 	textStyle            = lipgloss.NewStyle().Foreground(colorText)
 
