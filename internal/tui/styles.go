@@ -7,8 +7,16 @@ import (
 )
 
 var (
-	lineIndicator = "❯"
+	selectedRowIndicatorPart string
+	inputIndicatorPart       string
+)
 
+func initIndicators(indicator string) {
+	selectedRowIndicatorPart = indicatorStyle.Render(indicator)
+	inputIndicatorPart = inputArrowStyle.Render(indicator)
+}
+
+var (
 	// https://catppuccin.com/palette/
 	colorSurface1 = lipgloss.AdaptiveColor{
 		Light: "#bcc0cc",
@@ -38,9 +46,7 @@ var (
 	inputArrowStyle      = lipgloss.NewStyle().Bold(true).Foreground(colorLavender)
 	textStyle            = lipgloss.NewStyle().Foreground(colorText)
 
-	selectedRowIndicatorPart = indicatorStyle.Render(lineIndicator)
-	inputIndicatorPart       = inputArrowStyle.Render(lineIndicator)
-	beamPart                 = bgGrayStyle.Render(" ")
+	beamPart = bgGrayStyle.Render(" ")
 )
 
 type listStyle int

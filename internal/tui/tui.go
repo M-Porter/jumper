@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/m-porter/jumper/internal/config"
 	"github.com/m-porter/jumper/internal/lib"
 	"github.com/m-porter/jumper/internal/logger"
 
@@ -196,6 +197,8 @@ func (m *model) toggleListStyle() {
 }
 
 func Run(opts Options) (string, error) {
+	initIndicators(config.Get().LineIndicator)
+
 	app := core.NewApp()
 
 	m := &model{
