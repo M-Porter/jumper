@@ -81,7 +81,7 @@ func (a *Application) Analyze() {
 					}
 				}
 
-				if !canSearchDeeper(p) {
+				if !canSearchDeeper(p, inclPath) {
 					//SkipDir to tell the walker to not go any further
 					return filepath.SkipDir
 				}
@@ -143,8 +143,13 @@ func (a *Application) readFromCache() {
 	}
 }
 
-func canSearchDeeper(path string) bool {
-	return len(strings.Split(filepath.Dir(path), string(filepath.Separator))) <= config.Get().SearchMaxDepth
+func canSearchDeeper(path, inclPath string) bool {
+	rel, err := filepath.Rel(inclPath, path)
+	if err != nil {
+		return false
+	}
+	depth := len(strings.Split(rel, string(filepath.Separator)))
+	return depth <= config.Get().SearchMaxDepth
 }
 
 func NewApp() *Application {
