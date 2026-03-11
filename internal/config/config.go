@@ -79,6 +79,10 @@ var config *Config = nil
 
 var conf *configure.Configure
 
+func Init() {
+	setupConfigure()
+}
+
 func setupConfigure() {
 	if conf != nil {
 		return
