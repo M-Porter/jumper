@@ -15,6 +15,9 @@ release version:
     fi
     goreleaser release --clean
 
+build-release:
+    goreleaser build --clean --snapshot
+
 build:
     go build
 
