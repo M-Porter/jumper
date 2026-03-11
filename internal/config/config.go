@@ -13,6 +13,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var config *Config
+
+var conf *configure.Configure
+
 type Config struct {
 	HomeDir           string
 	JumperDir         string
@@ -69,15 +73,11 @@ func (i *configFromFile) toConfig() *Config {
 
 	for _, pathStop := range c.searchPathStops {
 		pathStopRegexp := regexp.MustCompile(fmt.Sprintf("%s$", regexp.QuoteMeta(pathStop)))
-		c.SearchPathStops = append(config.SearchPathStops, pathStopRegexp)
+		c.SearchPathStops = append(c.SearchPathStops, pathStopRegexp)
 	}
 
 	return c
 }
-
-var config *Config = nil
-
-var conf *configure.Configure
 
 func Init() {
 	setupConfigure()
