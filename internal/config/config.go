@@ -18,65 +18,31 @@ var config *Config
 var conf *configure.Configure
 
 type Config struct {
-	HomeDir           string
-	JumperDir         string
-	CacheFileFullPath string
-	CacheFile         string
-	SearchIncludes    []string         // see configFromFile.SearchIncludes
-	SearchExcludes    []string         // see configFromFile.SearchExcludes
-	SearchPathStops   []*regexp.Regexp // see configFromFile.SearchPathStops
-	SearchMaxDepth    int              // see configFromFile.SearchMaxDepth
-	LineIndicator     string           // see configFromFile.LineIndicator
-
-	searchPathStops []string
-}
-
-func (c *Config) toFileConfig() *configFromFile {
-	return &configFromFile{
-		CacheFile:       c.CacheFile,
-		SearchIncludes:  c.SearchIncludes,
-		SearchExcludes:  c.SearchExcludes,
-		SearchPathStops: c.searchPathStops,
-		SearchMaxDepth:  c.SearchMaxDepth,
-		LineIndicator:   c.LineIndicator,
-	}
-}
-
-// the config structure as written to the file
-type configFromFile struct {
-	CacheFile string `mapstructure:"cache_file"`
-	// Which paths to include in the search. The starting points.
-	SearchIncludes []string `mapstructure:"search_includes"`
-	// Which paths to ignore from the search if come across within the search excludes.
-	SearchExcludes []string `mapstructure:"search_excludes"`
-	// how we determine not to go any deeper when walking
+	// persisted to YAML
+	CacheFile       string   `mapstructure:"cache_file"`
+	SearchIncludes  []string `mapstructure:"search_includes"`
+	SearchExcludes  []string `mapstructure:"search_excludes"`
 	SearchPathStops []string `mapstructure:"search_path_stops"`
-	// how far deep we attempt to search beyond the home directory
-	SearchMaxDepth int `mapstructure:"search_max_depth"`
-	// The line indicator
-	LineIndicator string `mapstructure:"line_indicator"`
+	SearchMaxDepth  int      `mapstructure:"search_max_depth"`
+	LineIndicator   string   `mapstructure:"line_indicator"`
+
+	// computed at load time, not persisted
+	HomeDir              string
+	JumperDir            string
+	CacheFileFullPath    string
+	SearchPathStopRegexp []*regexp.Regexp
 }
 
-func (i *configFromFile) toConfig() *Config {
-	c := &Config{
-		HomeDir:         HomeDir(),
-		SearchIncludes:  i.SearchIncludes,
-		SearchExcludes:  i.SearchExcludes,
-		CacheFile:       i.CacheFile,
-		SearchMaxDepth:  i.SearchMaxDepth,
-		searchPathStops: i.SearchPathStops,
-		LineIndicator:   i.LineIndicator,
-	}
+func (c *Config) hydrate() {
+	hd := HomeDir()
+	c.HomeDir = hd
+	c.CacheFileFullPath = filepath.Join(hd, JumperDirname, c.CacheFile)
+	c.JumperDir = filepath.Join(hd, JumperDirname)
 
-	c.CacheFileFullPath = filepath.Join(c.HomeDir, JumperDirname, c.CacheFile)
-	c.JumperDir = filepath.Join(c.HomeDir, JumperDirname)
-
-	for _, pathStop := range c.searchPathStops {
+	for _, pathStop := range c.SearchPathStops {
 		pathStopRegexp := regexp.MustCompile(fmt.Sprintf("%s$", regexp.QuoteMeta(pathStop)))
-		c.SearchPathStops = append(c.SearchPathStops, pathStopRegexp)
+		c.SearchPathStopRegexp = append(c.SearchPathStopRegexp, pathStopRegexp)
 	}
-
-	return c
 }
 
 func Init() {
@@ -102,7 +68,7 @@ func setupConfigure() {
 	cobra.CheckErr(conf.SetConfigDir(configDirFull))
 	cobra.CheckErr(conf.SetWriteIfNotExists(true))
 	cobra.CheckErr(conf.SetDefaults(
-		configFromFile{
+		Config{
 			CacheFile:       DefaultCacheFile,
 			SearchIncludes:  defaultSearchIncludes,
 			SearchExcludes:  defaultSearchExcludes,
@@ -120,10 +86,9 @@ func Get() *Config {
 		return config
 	}
 
-	internalConfig := &configFromFile{}
-	cobra.CheckErr(conf.Get(internalConfig))
-
-	config = internalConfig.toConfig()
+	config = &Config{}
+	cobra.CheckErr(conf.Get(config))
+	config.hydrate()
 
 	return config
 }
@@ -136,7 +101,7 @@ func Save(c *Config) {
 	}
 
 	config = c
-	cobra.CheckErr(conf.Save(config.toFileConfig()))
+	cobra.CheckErr(conf.Save(config))
 }
 
 func Filepath() string {

@@ -68,7 +68,7 @@ func (a *Application) Analyze() {
 					return filepath.SkipDir
 				}
 
-				for _, re := range config.Get().SearchPathStops {
+				for _, re := range config.Get().SearchPathStopRegexp {
 					if re.MatchString(p) {
 						cleanPath := filepath.Dir(p)
 						projectDirs = append(projectDirs, cleanPath)
