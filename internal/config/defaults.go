@@ -31,6 +31,6 @@ var defaultSearchPathStops = []string{
 	"/pyproject.toml",
 }
 
-var defaultSearchMaxDepth = 6
+var defaultSearchMaxDepth = 1
 
 var defaultLineIndicator = "❯"
