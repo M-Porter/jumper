@@ -1,6 +1,8 @@
+version: 2
+
 brews:
   - name: jumper
-    tap:
+    repository:
       owner: M-Porter
       name: homebrew-tap
       branch: main

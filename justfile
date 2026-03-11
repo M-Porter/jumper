@@ -13,7 +13,7 @@ release version:
         git tag -a "{{version}}" -m "Release {{version}}"
         git push origin "{{version}}"
     fi
-    goreleaser release --rm-dist
+    goreleaser release --clean
 
 build:
     go build
