@@ -1,5 +1,13 @@
 version: 2
 
+builds:
+  - goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
 brews:
   - name: jumper
     repository:
