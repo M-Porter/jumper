@@ -1,8 +1,8 @@
 package config
 
-var JumperDirname = ".jumper"
+var JumperDirname = ".config/jumper"
 var Filename = "config"
-var Type = "yml"
+var Type = "yaml"
 var DefaultCacheFile = "cache"
 
 var defaultSearchIncludes = []string{
@@ -33,4 +33,4 @@ var defaultSearchPathStops = []string{
 
 var defaultSearchMaxDepth = 6
 
-var lineIndicator = "❯"
+var defaultLineIndicator = "❯"

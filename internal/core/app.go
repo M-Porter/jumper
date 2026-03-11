@@ -21,7 +21,7 @@ type Application struct {
 }
 
 func (a *Application) Setup() {
-	isStale, err := isCacheStale(config.C.CacheFileFullPath)
+	isStale, err := isCacheStale(config.Get().CacheFileFullPath)
 	if os.IsNotExist(err) {
 		a.Analyze()
 	} else {
@@ -35,17 +35,17 @@ func (a *Application) Setup() {
 }
 
 func (a *Application) Analyze() {
-	excludeRegex := lib.RegexpJoinPartsOr(config.C.SearchExcludes)
+	excludeRegex := lib.RegexpJoinPartsOr(config.Get().SearchExcludes)
 
 	var projectDirs []string
 	var wg sync.WaitGroup
 
 	counter := 0
 
-	wg.Add(len(config.C.SearchIncludes))
+	wg.Add(len(config.Get().SearchIncludes))
 
-	for _, search := range config.C.SearchIncludes {
-		fullSearch := filepath.Join(config.C.HomeDir, search)
+	for _, search := range config.Get().SearchIncludes {
+		fullSearch := filepath.Join(config.Get().HomeDir, search)
 		logger.Log("analyzing path", zap.String("path", fullSearch))
 
 		go func(inclPath string) {
@@ -68,7 +68,7 @@ func (a *Application) Analyze() {
 					return filepath.SkipDir
 				}
 
-				for _, re := range config.C.SearchPathStops {
+				for _, re := range config.Get().SearchPathStopRegexp {
 					if re.MatchString(p) {
 						cleanPath := filepath.Dir(p)
 						projectDirs = append(projectDirs, cleanPath)
@@ -111,7 +111,7 @@ func (a *Application) Analyze() {
 	logger.Log("number of directories walked", zap.Int("count", counter))
 	logger.Log("projects found", zap.Int("count", len(projectDirs)))
 
-	err := writeToCache(config.C.CacheFileFullPath, projectDirs)
+	err := writeToCache(config.Get().CacheFileFullPath, projectDirs)
 	if err != nil {
 		logger.Log("failed writing to cache")
 		cobra.CheckErr(err)
@@ -133,7 +133,7 @@ func (a *Application) emitCacheUpdateEvent() {
 }
 
 func (a *Application) readFromCache() {
-	c, err := readFromCache(config.C.CacheFileFullPath)
+	c, err := readFromCache(config.Get().CacheFileFullPath)
 	if err != nil {
 		cobra.CheckErr(err)
 	}
@@ -144,7 +144,7 @@ func (a *Application) readFromCache() {
 }
 
 func canSearchDeeper(path string) bool {
-	return len(strings.Split(filepath.Dir(path), string(filepath.Separator))) <= config.C.SearchMaxDepth
+	return len(strings.Split(filepath.Dir(path), string(filepath.Separator))) <= config.Get().SearchMaxDepth
 }
 
 func NewApp() *Application {
