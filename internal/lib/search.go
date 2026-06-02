@@ -40,12 +40,16 @@ func FuzzySearchSlice(search []string, term string) []string {
 
 	term = normalizeString(term)
 
-	re := regexp.MustCompile(
+	re, err := regexp.Compile(
 		fmt.Sprintf(
 			"(?i).*%s.*",
 			strings.Join(strings.Split(term, " "), ".*"),
 		),
 	)
+	if err != nil {
+		logger.Log("Failed to compile regex", zap.String("regex", term), zap.Error(err))
+		return search
+	}
 
 	logger.Log("regexp", zap.Any("regexp", re.String()))
 
