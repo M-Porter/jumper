@@ -11,3 +11,4 @@ vendor/
 jumper
 dist/
 githubtoken
+.env

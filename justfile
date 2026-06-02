@@ -1,3 +1,7 @@
+# Set dotenv-load+export loads all env vars defined in `.env` and exports them to child processes.
+set dotenv-load
+set export
+
 format:
     gofmt -w .
     goimports -w .
