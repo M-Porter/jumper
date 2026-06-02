@@ -2,6 +2,10 @@
 set dotenv-load
 set export
 
+[private]
+default:
+    just --list
+
 format:
     gofmt -w .
     goimports -w .
