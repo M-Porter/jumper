@@ -9,6 +9,7 @@ import (
 	"github.com/m-porter/jumper/internal/config"
 	"github.com/m-porter/jumper/internal/lib"
 	"github.com/m-porter/jumper/internal/logger"
+	"go.uber.org/zap"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/m-porter/jumper/internal/core"
@@ -22,11 +23,12 @@ type Options struct {
 	StartingQuery string
 }
 
-type programEvent struct{}
+type searchResultsMsg struct {
+	Items     []listItem
+	Timestamp int64
+}
 
-type searchResultsUpdatedEvent programEvent
-
-type cacheUpdatedEvent programEvent
+type cacheUpdatedEvent struct{}
 
 type listItem struct {
 	Path string
@@ -62,21 +64,21 @@ func pathsToListItems(paths []string) []listItem {
 }
 
 func (m *model) Init() tea.Cmd {
-	go func() {
+	return tea.Batch(tea.EnterAltScreen, tea.DisableMouse, func() tea.Msg {
 		m.App.Setup()
-		m.search()
-	}()
-	return tea.Batch(tea.EnterAltScreen, tea.DisableMouse)
+		return searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())()
+	})
 }
 
 func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := message.(type) {
-	case searchResultsUpdatedEvent:
-		logger.Log("searchResultsUpdatedEvent recieved")
+	case searchResultsMsg:
+		m.handleSearchResultsMsg(msg)
 		return m, nil
+
 	case cacheUpdatedEvent:
 		logger.Log("cacheUpdatedEvent recieved")
-		return m, nil
+		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
 
 	case tea.WindowSizeMsg:
 		size := message.(tea.WindowSizeMsg)
@@ -105,17 +107,21 @@ func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		case tea.KeyDelete, tea.KeyCtrlH:
 			m.InputValue = ""
-			go m.search()
+			return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
 
 		case tea.KeyBackspace:
 			if len(m.InputValue) > 0 {
 				m.InputValue = m.InputValue[:len(m.InputValue)-1]
 			}
-			go m.search()
+			return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+
+		case tea.KeySpace:
+			m.InputValue += " "
+			return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
 
 		case tea.KeyRunes:
 			m.InputValue = fmt.Sprintf("%s%s", m.InputValue, msg.String())
-			go m.search()
+			return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
 		}
 	}
 
@@ -144,6 +150,17 @@ func (m *model) View() string {
 	return strings.Join(output, "\n")
 }
 
+func (m *model) handleSearchResultsMsg(msg searchResultsMsg) {
+	if msg.Timestamp > m.ListLastUpdatedAt {
+		logger.Log("searchResultsMsg received", zap.Int64("last_ts", m.ListLastUpdatedAt), zap.Int64("ts", msg.Timestamp))
+		m.ListLastUpdatedAt = msg.Timestamp
+		m.ListItems = msg.Items
+		m.CursorPos = 0
+	} else {
+		logger.Log("out of order searchResultsMsg received", zap.Int64("last_ts", m.ListLastUpdatedAt), zap.Int64("ts", msg.Timestamp))
+	}
+}
+
 // moveCursorUp decrements the cursor pos value
 func (m *model) moveCursorUp() {
 	if m.CursorPos <= 0 {
@@ -168,32 +185,28 @@ func (m *model) moveCursorDown() {
 	}
 }
 
-func (m *model) search() {
-	now := time.Now().UnixNano()
-
-	var results []string
-
-	if m.InputValue == "" {
-		results = m.App.Directories
-	} else {
-		results = lib.FuzzySearchSlice(m.App.Directories, m.InputValue)
-	}
-
-	if now > m.ListLastUpdatedAt {
-		m.ListLastUpdatedAt = now
-		m.ListItems = pathsToListItems(results)
-		m.CursorPos = 0
-
-		program.Send(searchResultsUpdatedEvent{})
-	}
-}
-
 func (m *model) toggleListStyle() {
 	next := int(m.ListStyle) + 1
 	if next < len(listStyles) {
 		m.ListStyle = listStyles[next]
 	} else {
 		m.ListStyle = listStyles[0]
+	}
+}
+
+func searchCmd(dirs []string, term string, now int64) tea.Cmd {
+	return func() tea.Msg {
+		var results []string
+		if term == "" {
+			results = dirs
+		} else {
+			results = lib.FuzzySearchSlice(dirs, term)
+		}
+
+		return searchResultsMsg{
+			Items:     pathsToListItems(results),
+			Timestamp: now,
+		}
 	}
 }
 
