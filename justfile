@@ -6,9 +6,13 @@ format:
     gofmt -w .
     goimports -w .
 
+[doc("Release a new version of jumper using goreleaser.")]
 release version:
     #!/usr/bin/env -S bash -x
     set -u
+    [[ "{{version}}" == v* ]] || { echo "Error: version must start with 'v' (got '{{version}}')"; exit 1; }
+    read -r -p "Release {{version}}? [y/N] " confirm
+    [[ "$confirm" == [yY] ]] || exit 0
     : "${GITHUB_TOKEN:?GITHUB_TOKEN not set in the environment.}"
     git ls-remote --exit-code --tags origin "{{version}}"
     if [[ "$?" == "0" ]]; then
