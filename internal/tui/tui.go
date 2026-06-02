@@ -213,5 +213,6 @@ func Run(opts Options) (string, error) {
 		program.Send(cacheUpdatedEvent{})
 	})
 
-	return selectedPath, program.Start()
+	_, err := program.Run()
+	return selectedPath, err
 }
