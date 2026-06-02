@@ -17,8 +17,6 @@ import (
 
 var selectedPath = "."
 
-var program *tea.Program
-
 type Options struct {
 	StartingQuery string
 }
@@ -64,10 +62,15 @@ func pathsToListItems(paths []string) []listItem {
 }
 
 func (m *model) Init() tea.Cmd {
-	return tea.Batch(tea.EnterAltScreen, tea.DisableMouse, func() tea.Msg {
-		m.App.Setup()
-		return searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())()
-	})
+	return tea.Batch(
+		tea.EnterAltScreen,
+		tea.DisableMouse,
+		searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano()),
+		func() tea.Msg {
+			m.App.Setup()
+			return cacheUpdatedEvent{}
+		},
+	)
 }
 
 func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
@@ -77,7 +80,7 @@ func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case cacheUpdatedEvent:
-		logger.Log("cacheUpdatedEvent recieved")
+		logger.Log("cacheUpdatedEvent received")
 		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
 
 	case tea.WindowSizeMsg:
@@ -88,41 +91,47 @@ func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEscape, tea.KeyCtrlC:
-			return m, tea.Quit
+		return m.handleKeyMsg(msg)
+	}
 
-		case tea.KeyUp:
-			m.moveCursorUp()
+	return m, nil
+}
 
-		case tea.KeyDown:
-			m.moveCursorDown()
+func (m *model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.Type {
+	case tea.KeyEscape, tea.KeyCtrlC:
+		return m, tea.Quit
 
-		case tea.KeyEnter:
-			selectedPath = m.ListItems[m.CursorPos].Path
-			return m, tea.Quit
+	case tea.KeyUp:
+		m.moveCursorUp()
 
-		case tea.KeyTab:
-			m.toggleListStyle()
+	case tea.KeyDown:
+		m.moveCursorDown()
 
-		case tea.KeyDelete, tea.KeyCtrlH:
-			m.InputValue = ""
-			return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+	case tea.KeyEnter:
+		selectedPath = m.ListItems[m.CursorPos].Path
+		return m, tea.Quit
 
-		case tea.KeyBackspace:
-			if len(m.InputValue) > 0 {
-				m.InputValue = m.InputValue[:len(m.InputValue)-1]
-			}
-			return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+	case tea.KeyTab:
+		m.toggleListStyle()
 
-		case tea.KeySpace:
-			m.InputValue += " "
-			return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+	case tea.KeyDelete, tea.KeyCtrlH:
+		m.InputValue = ""
+		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
 
-		case tea.KeyRunes:
-			m.InputValue = fmt.Sprintf("%s%s", m.InputValue, msg.String())
-			return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+	case tea.KeyBackspace:
+		if len(m.InputValue) > 0 {
+			m.InputValue = m.InputValue[:len(m.InputValue)-1]
 		}
+		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+
+	case tea.KeySpace:
+		m.InputValue += " "
+		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+
+	case tea.KeyRunes:
+		m.InputValue = fmt.Sprintf("%s%s", m.InputValue, msg.String())
+		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
 	}
 
 	return m, nil
@@ -220,7 +229,7 @@ func Run(opts Options) (string, error) {
 		InputValue: opts.StartingQuery,
 	}
 
-	program = tea.NewProgram(m, tea.WithAltScreen())
+	program := tea.NewProgram(m, tea.WithAltScreen())
 
 	app.SetCacheUpdateCallback(func() {
 		program.Send(cacheUpdatedEvent{})
