@@ -169,6 +169,8 @@ func (m *model) moveCursorDown() {
 }
 
 func (m *model) search() {
+	now := time.Now().UnixNano()
+
 	var results []string
 
 	if m.InputValue == "" {
@@ -177,9 +179,8 @@ func (m *model) search() {
 		results = lib.FuzzySearchSlice(m.App.Directories, m.InputValue)
 	}
 
-	// prevents out-of-order updates
-	now := time.Now().UnixNano()
 	if now > m.ListLastUpdatedAt {
+		m.ListLastUpdatedAt = now
 		m.ListItems = pathsToListItems(results)
 		m.CursorPos = 0
 

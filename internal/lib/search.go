@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"unicode"
 
 	levenshtein "github.com/ka-weihe/fast-levenshtein"
@@ -34,6 +35,9 @@ func normalizeString(in string) string {
 }
 
 func FuzzySearchSlice(search []string, term string) []string {
+	searchResults := make(chan match, len(search))
+	var wg sync.WaitGroup
+
 	term = normalizeString(term)
 
 	re := regexp.MustCompile(
@@ -45,25 +49,42 @@ func FuzzySearchSlice(search []string, term string) []string {
 
 	logger.Log("regexp", zap.Any("regexp", re.String()))
 
-	var matches []match
 	for _, s := range search {
-		doc := normalizeString(filepath.Base(s))
-		if re.MatchString(doc) {
-			distance := levenshtein.Distance(doc, term)
-			matches = append(matches, match{
-				value:    s,
-				distance: distance,
-			})
-		}
+		wg.Add(1)
+		go func(value string) {
+			defer wg.Done()
+
+			doc := normalizeString(filepath.Base(value))
+			if re.MatchString(doc) {
+				distance := levenshtein.Distance(doc, term)
+				searchResults <- match{
+					value:    value,
+					distance: distance,
+				}
+			}
+		}(s)
 	}
 
+	go func() {
+		wg.Wait()
+		close(searchResults)
+	}()
+
+	// collect
+	matches := make([]match, 0, len(search))
+	for sr := range searchResults {
+		matches = append(matches, sr)
+	}
+
+	// sort
 	sort.Slice(matches, func(i, j int) bool {
 		return matches[i].distance < matches[j].distance
 	})
 
-	var results []string
-	for _, m := range matches {
-		results = append(results, m.value)
+	// transform
+	results := make([]string, len(matches))
+	for i, m := range matches {
+		results[i] = m.value
 	}
 
 	return results
