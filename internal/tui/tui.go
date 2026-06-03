@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/m-porter/jumper/internal/config"
 	"github.com/m-porter/jumper/internal/lib"
 	"github.com/m-porter/jumper/internal/logger"
 	"go.uber.org/zap"
@@ -27,12 +26,6 @@ type searchResultsMsg struct {
 
 type cacheUpdatedEvent struct{}
 
-type listItem struct {
-	Path string
-	Base string
-	Dir  string
-}
-
 type windowSize struct {
 	Height int
 	Width  int
@@ -41,7 +34,6 @@ type windowSize struct {
 type model struct {
 	App               *core.Application
 	CursorPos         int
-	ListStyle         listStyle
 	ListItems         []string
 	ListLastUpdatedAt int64
 	InputValue        string
@@ -205,8 +197,6 @@ func searchCmd(dirs []string, term string, now int64) tea.Cmd {
 }
 
 func Run(opts Options) (string, error) {
-	initIndicators(config.Get().LineIndicator)
-
 	app := core.NewApp()
 
 	m := &model{
