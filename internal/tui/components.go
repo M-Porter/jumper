@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/m-porter/jumper/internal/theme"
@@ -31,4 +32,27 @@ func SearchBoxComponent(value string, found int, total int, width int) string {
 		Render(stats)
 
 	return input + right
+}
+
+// ProjectRowComponent renders the individual row for each project
+func ProjectRowComponent(value string, selected bool) string {
+	pathStyle := lipgloss.NewStyle().Foreground(theme.Overlay1)
+
+	var selectedStyle lipgloss.Style
+	var projectStyle lipgloss.Style
+	var selectedPointer = ""
+	if selected {
+		selectedStyle = lipgloss.NewStyle().Foreground(theme.Blue)
+		projectStyle = lipgloss.NewStyle().Foreground(theme.Blue)
+		selectedPointer = fmt.Sprintf("%s", theme.Pointer)
+	} else {
+		selectedStyle = lipgloss.NewStyle().Foreground(theme.Surface2)
+		projectStyle = lipgloss.NewStyle().Foreground(theme.Text)
+		selectedPointer = fmt.Sprintf(" ")
+	}
+
+	dir := filepath.Dir(value)
+	proj := filepath.Base(value)
+
+	return fmt.Sprintf("%s %s %s%s", selectedStyle.Render(selectedPointer), selectedStyle.Render(theme.Folder), pathStyle.Render(dir+"/"), projectStyle.Render(proj))
 }

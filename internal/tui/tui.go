@@ -152,7 +152,8 @@ func (m *model) View() string {
 	if m.WindowSize != nil {
 		for i, item := range m.ListItems {
 			if i < m.WindowSize.Height-2 {
-				line := m.ListStyle.format(item, m.CursorPos == i)
+				//line := m.ListStyle.format(item, m.CursorPos == i)
+				line := ProjectRowComponent(item.Path, m.CursorPos == i)
 				output = append(output, line)
 			}
 		}
