@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -22,7 +21,7 @@ type Options struct {
 }
 
 type searchResultsMsg struct {
-	Items     []listItem
+	Items     []string
 	Timestamp int64
 }
 
@@ -43,22 +42,11 @@ type model struct {
 	App               *core.Application
 	CursorPos         int
 	ListStyle         listStyle
-	ListItems         []listItem
+	ListItems         []string
 	ListLastUpdatedAt int64
 	InputValue        string
 	WindowSize        *windowSize
-}
-
-func pathsToListItems(paths []string) []listItem {
-	var r []listItem
-	for _, path := range paths {
-		r = append(r, listItem{
-			Path: path,
-			Base: filepath.Base(path),
-			Dir:  filepath.Dir(path),
-		})
-	}
-	return r
+	TruncatePaths     bool
 }
 
 func (m *model) Init() tea.Cmd {
@@ -109,11 +97,11 @@ func (m *model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.moveCursorDown()
 
 	case tea.KeyEnter:
-		selectedPath = m.ListItems[m.CursorPos].Path
+		selectedPath = m.ListItems[m.CursorPos]
 		return m, tea.Quit
 
 	case tea.KeyTab:
-		m.toggleListStyle()
+		m.togglePathTruncation()
 
 	case tea.KeyDelete, tea.KeyCtrlH:
 		m.InputValue = ""
@@ -152,8 +140,7 @@ func (m *model) View() string {
 	if m.WindowSize != nil {
 		for i, item := range m.ListItems {
 			if i < m.WindowSize.Height-2 {
-				//line := m.ListStyle.format(item, m.CursorPos == i)
-				line := ProjectRowComponent(item.Path, m.CursorPos == i)
+				line := ProjectRowComponent(item, m.CursorPos == i, m.TruncatePaths)
 				output = append(output, line)
 			}
 		}
@@ -197,13 +184,8 @@ func (m *model) moveCursorDown() {
 	}
 }
 
-func (m *model) toggleListStyle() {
-	next := int(m.ListStyle) + 1
-	if next < len(listStyles) {
-		m.ListStyle = listStyles[next]
-	} else {
-		m.ListStyle = listStyles[0]
-	}
+func (m *model) togglePathTruncation() {
+	m.TruncatePaths = !m.TruncatePaths
 }
 
 func searchCmd(dirs []string, term string, now int64) tea.Cmd {
@@ -216,7 +198,7 @@ func searchCmd(dirs []string, term string, now int64) tea.Cmd {
 		}
 
 		return searchResultsMsg{
-			Items:     pathsToListItems(results),
+			Items:     results,
 			Timestamp: now,
 		}
 	}
@@ -228,8 +210,9 @@ func Run(opts Options) (string, error) {
 	app := core.NewApp()
 
 	m := &model{
-		App:        app,
-		InputValue: opts.StartingQuery,
+		App:           app,
+		InputValue:    opts.StartingQuery,
+		TruncatePaths: true,
 	}
 
 	program := tea.NewProgram(m, tea.WithAltScreen())

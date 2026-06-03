@@ -2,7 +2,9 @@ package tui
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/m-porter/jumper/internal/theme"
@@ -35,24 +37,41 @@ func SearchBoxComponent(value string, found int, total int, width int) string {
 }
 
 // ProjectRowComponent renders the individual row for each project
-func ProjectRowComponent(value string, selected bool) string {
+func ProjectRowComponent(value string, selected bool, truncatePath bool) string {
 	pathStyle := lipgloss.NewStyle().Foreground(theme.Overlay1)
 
 	var selectedStyle lipgloss.Style
 	var projectStyle lipgloss.Style
-	var selectedPointer = ""
+	selectedPointer := " "
 	if selected {
-		selectedStyle = lipgloss.NewStyle().Foreground(theme.Blue)
-		projectStyle = lipgloss.NewStyle().Foreground(theme.Blue)
+		selectedStyle = lipgloss.NewStyle().Foreground(theme.Blue).Bold(true)
+		projectStyle = lipgloss.NewStyle().Foreground(theme.Blue).Bold(true)
 		selectedPointer = fmt.Sprintf("%s", theme.Pointer)
 	} else {
 		selectedStyle = lipgloss.NewStyle().Foreground(theme.Surface2)
 		projectStyle = lipgloss.NewStyle().Foreground(theme.Text)
-		selectedPointer = fmt.Sprintf(" ")
 	}
 
 	dir := filepath.Dir(value)
 	proj := filepath.Base(value)
 
-	return fmt.Sprintf("%s %s %s%s", selectedStyle.Render(selectedPointer), selectedStyle.Render(theme.Folder), pathStyle.Render(dir+"/"), projectStyle.Render(proj))
+	if homedir, err := os.UserHomeDir(); err == nil {
+		dir = strings.Replace(dir, homedir, "~", 1)
+	}
+
+	var dirStr string
+	pathParts := strings.Split(dir, string(os.PathSeparator))
+	if len(pathParts) > 2 && truncatePath {
+		dirStr = strings.Join(pathParts[:2], string(os.PathSeparator)) + "/" + theme.Ellipsis + "/"
+	} else {
+		dirStr = dir + "/"
+	}
+
+	return fmt.Sprintf("%s %s  %s%s", selectedStyle.Render(selectedPointer), selectedStyle.Render(theme.Folder), pathStyle.Render(dirStr), projectStyle.Render(proj))
+}
+
+// StatusBarComponent renders the bottom status bar that contains things like keyboard shortcuts and helpful hint
+// messages
+func StatusBarComponent() string {
+	return ""
 }
