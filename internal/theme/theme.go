@@ -2,18 +2,16 @@ package theme
 
 import "github.com/charmbracelet/lipgloss"
 
-type Glyph string
-
 const (
-	Pointer    Glyph = "❯"
-	Enter            = "↵"
-	Ellipsis         = "…"
-	ArrowRight       = "→"
-	ArrowUp          = "↑"
-	ArrowDown        = "↓"
-	Folder           = "\ue5ff"
-	Checkmark        = "✓"
-	Bullet           = "·"
+	Pointer    = "❯"
+	Enter      = "↵"
+	Ellipsis   = "…"
+	ArrowRight = "→"
+	ArrowUp    = "↑"
+	ArrowDown  = "↓"
+	Folder     = "\ue5ff"
+	Checkmark  = "✓"
+	Bullet     = "·"
 )
 
 type spinner struct {

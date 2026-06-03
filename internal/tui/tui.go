@@ -140,11 +140,13 @@ func (m *model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *model) View() string {
 	var output []string
 
-	inputLine := fmt.Sprintf("%s %s", inputIndicatorPart, m.InputValue)
-	output = append(output, inputLine)
+	width := 0
+	if m.WindowSize != nil {
+		width = m.WindowSize.Width
+	}
 
-	countLine := fmt.Sprintf("  %d / %d", len(m.ListItems), len(m.App.Directories))
-	output = append(output, detailDimStyle.Render(countLine))
+	searchBox := SearchBox(m.InputValue, len(m.ListItems), len(m.App.Directories), width)
+	output = append(output, searchBox)
 
 	// only print stuff if we know the window size or rendering gets messed up
 	if m.WindowSize != nil {
