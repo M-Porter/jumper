@@ -2,8 +2,8 @@ package tui
 
 import (
 	"fmt"
+	"strings"
 
-	"github.com/76creates/stickers/flexbox"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/m-porter/jumper/internal/theme"
 )
@@ -14,29 +14,22 @@ func InputComponent(value string) string {
 	return fmt.Sprintf("%s %s", pointerStyle.Render(theme.Pointer), value)
 }
 
-// SearchBox renders the entire top bar of the TUI with the Input on the left and the "x / y" value on the right.
-func SearchBox(value string, found int, total int, width int) string {
-	fb := flexbox.NewHorizontal(width, 1)
+// SearchBoxComponent renders the search bar with input on the left and "found / total" on the right.
+func SearchBoxComponent(value string, found int, total int, width int) string {
+	input := InputComponent(value)
+
+	foundStr := fmt.Sprintf("%d", found)
+	totalStr := fmt.Sprintf(" / %d", total)
 
 	foundStyle := lipgloss.NewStyle().Foreground(theme.Green).Bold(true)
 	dimStyle := lipgloss.NewStyle().Foreground(theme.Overlay1)
-	stats := fmt.Sprintf(
-		"%s%s",
-		foundStyle.Render(fmt.Sprintf("%d", found)),
-		dimStyle.Render(fmt.Sprintf(" / %d", total)),
-	)
 
-	inputCell := flexbox.NewCell(1, 1).SetContent(InputComponent(value))
-	statsCell := flexbox.NewCell(1, 1).
-		SetStyle(lipgloss.NewStyle().AlignHorizontal(lipgloss.Right)).
-		SetContent(stats)
+	stats := foundStyle.Render(foundStr) + dimStyle.Render(totalStr)
 
-	cols := []*flexbox.Column{
-		fb.NewColumn().AddCells(inputCell),
-		fb.NewColumn().AddCells(statsCell),
+	gap := width - lipgloss.Width(input) - lipgloss.Width(stats)
+	if gap < 0 {
+		gap = 0
 	}
 
-	fb.AddColumns(cols)
-
-	return fb.Render()
+	return input + strings.Repeat(" ", gap) + stats
 }

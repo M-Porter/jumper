@@ -145,7 +145,7 @@ func (m *model) View() string {
 		width = m.WindowSize.Width
 	}
 
-	searchBox := SearchBox(m.InputValue, len(m.ListItems), len(m.App.Directories), width)
+	searchBox := SearchBoxComponent(m.InputValue, len(m.ListItems), len(m.App.Directories), width)
 	output = append(output, searchBox)
 
 	// only print stuff if we know the window size or rendering gets messed up
