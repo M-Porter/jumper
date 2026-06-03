@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/m-porter/jumper/internal/theme"
@@ -18,18 +17,18 @@ func InputComponent(value string) string {
 func SearchBoxComponent(value string, found int, total int, width int) string {
 	input := InputComponent(value)
 
-	foundStr := fmt.Sprintf("%d", found)
-	totalStr := fmt.Sprintf(" / %d", total)
-
 	foundStyle := lipgloss.NewStyle().Foreground(theme.Green).Bold(true)
 	dimStyle := lipgloss.NewStyle().Foreground(theme.Overlay1)
 
-	stats := foundStyle.Render(foundStr) + dimStyle.Render(totalStr)
+	stats := foundStyle.Render(fmt.Sprintf("%d", found)) + dimStyle.Render(fmt.Sprintf(" / %d ", total))
 
-	gap := width - lipgloss.Width(input) - lipgloss.Width(stats)
-	if gap < 0 {
-		gap = 0
-	}
+	gap := width - lipgloss.Width(input)
+	gap = max(0, gap)
 
-	return input + strings.Repeat(" ", gap) + stats
+	right := lipgloss.NewStyle().
+		Width(gap).
+		Align(lipgloss.Right).
+		Render(stats)
+
+	return input + right
 }
