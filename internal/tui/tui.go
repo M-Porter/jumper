@@ -5,8 +5,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/m-porter/jumper/internal/lib"
 	"github.com/m-porter/jumper/internal/logger"
+	"github.com/m-porter/jumper/internal/theme"
 	"go.uber.org/zap"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -128,15 +130,30 @@ func (m *model) View() string {
 	searchBox := SearchBoxComponent(m.InputValue, len(m.ListItems), len(m.App.Directories), width)
 	output = append(output, searchBox)
 
+	statusBar := StatusBarComponent(StatusBarParams{
+		RightContents: []string{
+			KeyHelpComponent(theme.ArrowUp+theme.ArrowDown, "move"),
+			KeyHelpComponent(theme.Enter, "select"),
+			//KeyHelpComponent("?", "help"), // todo
+		},
+	}, width)
+
+	// keep track of the height of everything not in the main render view so we can fill the list view
+	// without overflowing
+	componentsHeight := lipgloss.Height(searchBox) + lipgloss.Height(statusBar)
+
 	// only print stuff if we know the window size or rendering gets messed up
 	if m.WindowSize != nil {
+		listMaxHeight := m.WindowSize.Height - componentsHeight
 		for i, item := range m.ListItems {
-			if i < m.WindowSize.Height-2 {
+			if i < listMaxHeight {
 				line := ProjectRowComponent(item, m.CursorPos == i, m.TruncatePaths)
 				output = append(output, line)
 			}
 		}
 	}
+
+	output = append(output, statusBar)
 
 	return strings.Join(output, "\n")
 }
