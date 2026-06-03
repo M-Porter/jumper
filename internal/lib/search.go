@@ -34,33 +34,40 @@ func normalizeString(in string) string {
 	return out
 }
 
-func FuzzySearchSlice(search []string, term string) []string {
-	searchResults := make(chan match, len(search))
+// FuzzySearchSlice does a fuzzy search on haystack of paths given a needle. Searching is only done against the
+// base name of a given path. So given "/usr/dev/my-project", and "/usr/dev/dev-tools", a needle of "dev"
+// will only yield "/usr/dev/dev-tools".
+//
+// If the given needle value yield an invalid regex, the entire haystack is returned.
+//
+// The returned slice will be sorted based on Levenshtein distance.
+func FuzzySearchSlice(haystack []string, needle string) []string {
+	searchResults := make(chan match, len(haystack))
 	var wg sync.WaitGroup
 
-	term = normalizeString(term)
+	needle = normalizeString(needle)
 
 	re, err := regexp.Compile(
 		fmt.Sprintf(
 			"(?i).*%s.*",
-			strings.Join(strings.Split(term, " "), ".*"),
+			strings.Join(strings.Split(needle, " "), ".*"),
 		),
 	)
 	if err != nil {
-		logger.Log("Failed to compile regex", zap.String("regex", term), zap.Error(err))
-		return search
+		logger.Log("Failed to compile regex", zap.String("regex", needle), zap.Error(err))
+		return haystack
 	}
 
 	logger.Log("regexp", zap.Any("regexp", re.String()))
 
-	for _, s := range search {
+	for _, s := range haystack {
 		wg.Add(1)
 		go func(value string) {
 			defer wg.Done()
 
 			doc := normalizeString(filepath.Base(value))
 			if re.MatchString(doc) {
-				distance := levenshtein.Distance(doc, term)
+				distance := levenshtein.Distance(doc, needle)
 				searchResults <- match{
 					value:    value,
 					distance: distance,
@@ -75,7 +82,7 @@ func FuzzySearchSlice(search []string, term string) []string {
 	}()
 
 	// collect
-	matches := make([]match, 0, len(search))
+	matches := make([]match, 0, len(haystack))
 	for sr := range searchResults {
 		matches = append(matches, sr)
 	}
