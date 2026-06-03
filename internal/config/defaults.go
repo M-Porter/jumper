@@ -32,5 +32,3 @@ var defaultSearchPathStops = []string{
 }
 
 var defaultSearchMaxDepth = 1
-
-var defaultLineIndicator = "❯"

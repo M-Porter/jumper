@@ -3,7 +3,10 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/m-porter/jumper/internal/core"
+	"github.com/m-porter/jumper/internal/theme"
+	"github.com/m-porter/jumper/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -18,9 +21,9 @@ func AnalyzeCommand() *cobra.Command {
 			app.Analyze()
 			dirs := app.Directories
 
-			fmt.Printf("Projects found: %d\n", len(dirs))
+			fmt.Printf("Projects found: %s\n", lipgloss.NewStyle().Foreground(theme.Green).Bold(true).Render(fmt.Sprintf("%d", len(dirs))))
 			for _, dir := range dirs {
-				fmt.Printf("  - %s\n", dir)
+				fmt.Println(tui.ProjectRowComponent(dir, false, false))
 			}
 		},
 	}

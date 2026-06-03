@@ -38,3 +38,6 @@ clean:
 
 run cmd:
     go run . {{cmd}}
+
+test:
+    go test ./...

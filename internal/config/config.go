@@ -23,7 +23,6 @@ type Config struct {
 	SearchExcludes  []string `mapstructure:"search_excludes"`
 	SearchPathStops []string `mapstructure:"search_path_stops"`
 	SearchMaxDepth  int      `mapstructure:"search_max_depth"`
-	LineIndicator   string   `mapstructure:"line_indicator"`
 
 	// computed at load time, not persisted
 	HomeDir              string
@@ -73,7 +72,6 @@ func setupConfigure() {
 			SearchExcludes:  defaultSearchExcludes,
 			SearchPathStops: defaultSearchPathStops,
 			SearchMaxDepth:  defaultSearchMaxDepth,
-			LineIndicator:   defaultLineIndicator,
 		},
 	))
 }
