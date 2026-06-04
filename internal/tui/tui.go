@@ -119,7 +119,7 @@ func (m *model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *model) View() string {
+func (m *model) View() tea.View {
 	var output []string
 
 	width := 0
@@ -158,7 +158,9 @@ func (m *model) View() string {
 
 	output = append(output, statusBar)
 
-	return strings.Join(output, "\n")
+	v := tea.NewView(strings.Join(output, "\n"))
+	v.AltScreen = true
+	return v
 }
 
 func (m *model) handleSearchResultsMsg(msg searchResultsMsg) {
