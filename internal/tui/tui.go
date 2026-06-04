@@ -5,13 +5,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/m-porter/jumper/internal/lib"
 	"github.com/m-porter/jumper/internal/logger"
 	"github.com/m-porter/jumper/internal/theme"
 	"go.uber.org/zap"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/m-porter/jumper/internal/core"
 )
 

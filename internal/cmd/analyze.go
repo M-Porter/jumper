@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/m-porter/jumper/internal/core"
 	"github.com/m-porter/jumper/internal/theme"
 	"github.com/m-porter/jumper/internal/tui"
