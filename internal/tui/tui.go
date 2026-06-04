@@ -44,8 +44,6 @@ type model struct {
 
 func (m *model) Init() tea.Cmd {
 	return tea.Batch(
-		tea.EnterAltScreen,
-		tea.DisableMouse,
 		searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano()),
 		func() tea.Msg {
 			m.App.Setup()
@@ -228,7 +226,7 @@ func Run(opts Options) (string, error) {
 		TruncatePaths: true,
 	}
 
-	program := tea.NewProgram(m, tea.WithAltScreen())
+	program := tea.NewProgram(m)
 
 	app.SetCacheUpdateCallback(func() {
 		program.Send(cacheUpdatedEvent{})
