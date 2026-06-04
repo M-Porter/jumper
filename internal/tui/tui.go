@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -72,48 +71,50 @@ func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			Width:  size.Width,
 		}
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return m.handleKeyMsg(msg)
 	}
 
 	return m, nil
 }
 
-func (m *model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.Type {
-	case tea.KeyEscape, tea.KeyCtrlC:
+func (m *model) handleKeyMsg(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "esc", "ctrl+c":
 		return m, tea.Quit
 
-	case tea.KeyUp:
+	case "up":
 		m.moveCursorUp()
 
-	case tea.KeyDown:
+	case "down":
 		m.moveCursorDown()
 
-	case tea.KeyEnter:
+	case "enter":
 		selectedPath = m.ListItems[m.CursorPos]
 		return m, tea.Quit
 
-	case tea.KeyTab:
+	case "tab":
 		m.togglePathTruncation()
 
-	case tea.KeyDelete, tea.KeyCtrlH:
+	case "delete", "ctrl+h":
 		m.InputValue = ""
 		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
 
-	case tea.KeyBackspace:
+	case "backspace":
 		if len(m.InputValue) > 0 {
 			m.InputValue = m.InputValue[:len(m.InputValue)-1]
 		}
 		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
 
-	case tea.KeySpace:
+	case "space":
 		m.InputValue += " "
 		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
 
-	case tea.KeyRunes:
-		m.InputValue = fmt.Sprintf("%s%s", m.InputValue, msg.String())
-		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+	default:
+		if len(msg.Text) > 0 {
+			m.InputValue += msg.Text
+			return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+		}
 	}
 
 	return m, nil
