@@ -92,9 +92,12 @@ func StatusBarComponent(params StatusBarParams, width int) string {
 		Align(lipgloss.Right).
 		Render(rightContents)
 
-	return " " + lipgloss.NewStyle().BorderForeground(theme.Surface1).
+	return lipgloss.NewStyle().
+		MarginLeft(1).
+		MarginRight(1).
+		BorderForeground(theme.Surface1).
 		Border(lipgloss.RoundedBorder(), true, false, false, false).
-		Render(" "+leftContents+rightContents+" ")
+		Render(leftContents + rightContents)
 }
 
 func KeyHelpComponent(keys, hint string) string {

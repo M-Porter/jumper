@@ -131,10 +131,12 @@ func (m *model) View() string {
 	output = append(output, searchBox)
 
 	statusBar := StatusBarComponent(StatusBarParams{
-		RightContents: []string{
+		LeftContents: []string{
 			KeyHelpComponent(theme.ArrowUp+theme.ArrowDown, "move"),
 			KeyHelpComponent(theme.Enter, "select"),
-			//KeyHelpComponent("?", "help"), // todo
+		},
+		RightContents: []string{
+			KeyHelpComponent("esc", "exit"),
 		},
 	}, width)
 
@@ -148,6 +150,7 @@ func (m *model) View() string {
 		for i, item := range m.ListItems {
 			if i < listMaxHeight {
 				line := ProjectRowComponent(item, m.CursorPos == i, m.TruncatePaths)
+				line = lipgloss.NewStyle().PaddingLeft(2).Render(line)
 				output = append(output, line)
 			}
 		}
