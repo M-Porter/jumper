@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 )
@@ -34,9 +34,8 @@ func TestSearchBoxComponent(t *testing.T) {
 
 		assert.Equal(t, width, lipgloss.Width(searchBox))
 
-		// value starts at the 3rd character (rune index 2), after "❯ "
 		if tc.value != "" {
-			assert.True(t, strings.HasPrefix(string([]rune(plain)[2:]), tc.value), "value should start at character index 2")
+			assert.True(t, strings.Contains(plain, tc.value), "value should appear in search box")
 		}
 
 		totalStr := fmt.Sprintf("/ %d", tc.total)

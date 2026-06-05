@@ -1,17 +1,16 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/m-porter/jumper/internal/lib"
 	"github.com/m-porter/jumper/internal/logger"
 	"github.com/m-porter/jumper/internal/theme"
 	"go.uber.org/zap"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/m-porter/jumper/internal/core"
 )
 
@@ -45,8 +44,6 @@ type model struct {
 
 func (m *model) Init() tea.Cmd {
 	return tea.Batch(
-		tea.EnterAltScreen,
-		tea.DisableMouse,
 		searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano()),
 		func() tea.Msg {
 			m.App.Setup()
@@ -72,54 +69,56 @@ func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			Width:  size.Width,
 		}
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return m.handleKeyMsg(msg)
 	}
 
 	return m, nil
 }
 
-func (m *model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.Type {
-	case tea.KeyEscape, tea.KeyCtrlC:
+func (m *model) handleKeyMsg(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "esc", "ctrl+c":
 		return m, tea.Quit
 
-	case tea.KeyUp:
+	case "up":
 		m.moveCursorUp()
 
-	case tea.KeyDown:
+	case "down":
 		m.moveCursorDown()
 
-	case tea.KeyEnter:
+	case "enter":
 		selectedPath = m.ListItems[m.CursorPos]
 		return m, tea.Quit
 
-	case tea.KeyTab:
+	case "tab":
 		m.togglePathTruncation()
 
-	case tea.KeyDelete, tea.KeyCtrlH:
+	case "delete", "ctrl+h":
 		m.InputValue = ""
 		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
 
-	case tea.KeyBackspace:
+	case "backspace":
 		if len(m.InputValue) > 0 {
 			m.InputValue = m.InputValue[:len(m.InputValue)-1]
 		}
 		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
 
-	case tea.KeySpace:
+	case "space":
 		m.InputValue += " "
 		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
 
-	case tea.KeyRunes:
-		m.InputValue = fmt.Sprintf("%s%s", m.InputValue, msg.String())
-		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+	default:
+		if len(msg.Text) > 0 {
+			m.InputValue += msg.Text
+			return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+		}
 	}
 
 	return m, nil
 }
 
-func (m *model) View() string {
+func (m *model) View() tea.View {
 	var output []string
 
 	width := 0
@@ -158,7 +157,9 @@ func (m *model) View() string {
 
 	output = append(output, statusBar)
 
-	return strings.Join(output, "\n")
+	v := tea.NewView(strings.Join(output, "\n"))
+	v.AltScreen = true
+	return v
 }
 
 func (m *model) handleSearchResultsMsg(msg searchResultsMsg) {
@@ -225,7 +226,7 @@ func Run(opts Options) (string, error) {
 		TruncatePaths: true,
 	}
 
-	program := tea.NewProgram(m, tea.WithAltScreen())
+	program := tea.NewProgram(m)
 
 	app.SetCacheUpdateCallback(func() {
 		program.Send(cacheUpdatedEvent{})

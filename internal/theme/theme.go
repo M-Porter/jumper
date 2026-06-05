@@ -1,6 +1,9 @@
 package theme
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
+)
 
 const (
 	Pointer    = "❯"
@@ -43,16 +46,16 @@ func (s *spinner) Next() string {
 
 // https://catppuccin.com/palette/
 var (
-	Blue     = lipgloss.AdaptiveColor{Light: "#1e66f5", Dark: "#89b4fa"}
-	Mauve    = lipgloss.AdaptiveColor{Light: "#8839ef", Dark: "#cba6f7"}
-	Yellow   = lipgloss.AdaptiveColor{Light: "#df8e1d", Dark: "#f9e2af"}
-	Sky      = lipgloss.AdaptiveColor{Light: "#209fb5", Dark: "#89dceb"}
-	Green    = lipgloss.AdaptiveColor{Light: "#40a02b", Dark: "#a6e3a1"}
-	Text     = lipgloss.AdaptiveColor{Light: "#4c4f69", Dark: "#cdd6f4"}
-	Overlay1 = lipgloss.AdaptiveColor{Light: "#8c8fa1", Dark: "#7f849c"}
-	Surface0 = lipgloss.AdaptiveColor{Light: "#ccd0da", Dark: "#313244"}
-	Surface1 = lipgloss.AdaptiveColor{Light: "#bcc0cc", Dark: "#45475a"}
-	Surface2 = lipgloss.AdaptiveColor{Light: "#acb0be", Dark: "#585b70"}
-	Mantle   = lipgloss.AdaptiveColor{Light: "#e6e9ef", Dark: "#181825"}
-	Base     = lipgloss.AdaptiveColor{Light: "#eff1f5", Dark: "#1e1e2e"}
+	Blue     = compat.AdaptiveColor{Light: lipgloss.Color("#1e66f5"), Dark: lipgloss.Color("#89b4fa")}
+	Mauve    = compat.AdaptiveColor{Light: lipgloss.Color("#8839ef"), Dark: lipgloss.Color("#cba6f7")}
+	Yellow   = compat.AdaptiveColor{Light: lipgloss.Color("#df8e1d"), Dark: lipgloss.Color("#f9e2af")}
+	Sky      = compat.AdaptiveColor{Light: lipgloss.Color("#209fb5"), Dark: lipgloss.Color("#89dceb")}
+	Green    = compat.AdaptiveColor{Light: lipgloss.Color("#40a02b"), Dark: lipgloss.Color("#a6e3a1")}
+	Text     = compat.AdaptiveColor{Light: lipgloss.Color("#4c4f69"), Dark: lipgloss.Color("#cdd6f4")}
+	Overlay1 = compat.AdaptiveColor{Light: lipgloss.Color("#8c8fa1"), Dark: lipgloss.Color("#7f849c")}
+	Surface0 = compat.AdaptiveColor{Light: lipgloss.Color("#ccd0da"), Dark: lipgloss.Color("#313244")}
+	Surface1 = compat.AdaptiveColor{Light: lipgloss.Color("#bcc0cc"), Dark: lipgloss.Color("#45475a")}
+	Surface2 = compat.AdaptiveColor{Light: lipgloss.Color("#acb0be"), Dark: lipgloss.Color("#585b70")}
+	Mantle   = compat.AdaptiveColor{Light: lipgloss.Color("#e6e9ef"), Dark: lipgloss.Color("#181825")}
+	Base     = compat.AdaptiveColor{Light: lipgloss.Color("#eff1f5"), Dark: lipgloss.Color("#1e1e2e")}
 )
