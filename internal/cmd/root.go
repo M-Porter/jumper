@@ -28,6 +28,7 @@ func RootCmd(options RootCmdOptions) *cobra.Command {
 		ClearCmd(),
 		VersionCmd(options),
 		EditCmd(),
+		InitCmd(),
 	)
 
 	return cmd
