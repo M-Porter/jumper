@@ -44,3 +44,8 @@ j() {
   cd "$(realpath "$where")" || return
 }
 ```
+
+### Disabling nerd font glyphs
+
+If you do not have nerd fonts installed, you can disable those glyphs by adding
+`no_nerd_font: true` to the jumper config (`jumper config edit`).
