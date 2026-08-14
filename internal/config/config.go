@@ -23,6 +23,7 @@ type Config struct {
 	SearchExcludes  []string `mapstructure:"search_excludes"`
 	SearchPathStops []string `mapstructure:"search_path_stops"`
 	SearchMaxDepth  int      `mapstructure:"search_max_depth"`
+	NoNerdFont      bool     `mapstructure:"no_nerd_font"`
 
 	// computed at load time, not persisted
 	HomeDir              string

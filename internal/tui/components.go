@@ -70,7 +70,11 @@ func ProjectRowComponent(value string, selected bool, truncatePath bool) string 
 		dirStr = dir + "/"
 	}
 
-	return fmt.Sprintf("%s %s  %s%s", selectedStyle.Render(selectedPointer), selectedStyle.Render(theme.Folder), pathStyle.Render(dirStr), projectStyle.Render(proj))
+	// the following bit fixes weird looking spacing when the folder glyph isn't
+	// included basically changes "❯   ~/foo" to "❯ ~/foo"
+	folderGlyph := strings.TrimLeft(fmt.Sprintf("%s  ", theme.Folder()), " ")
+
+	return fmt.Sprintf("%s %s%s%s", selectedStyle.Render(selectedPointer), selectedStyle.Render(folderGlyph), pathStyle.Render(dirStr), projectStyle.Render(proj))
 }
 
 type StatusBarParams struct {

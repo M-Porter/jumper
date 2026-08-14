@@ -3,6 +3,7 @@ package theme
 import (
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/compat"
+	"github.com/m-porter/jumper/internal/config"
 )
 
 const (
@@ -12,7 +13,7 @@ const (
 	ArrowRight = "→"
 	ArrowUp    = "↑"
 	ArrowDown  = "↓"
-	Folder     = "\ue5ff"
+	folder     = "\ue5ff"
 	Checkmark  = "✓"
 	Bullet     = "·"
 )
@@ -24,6 +25,13 @@ type spinner struct {
 
 type SpinnerIter interface {
 	Next() string
+}
+
+func Folder() string {
+	if config.Get().NoNerdFont {
+		return ""
+	}
+	return folder
 }
 
 func NewSpinner() SpinnerIter {
