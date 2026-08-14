@@ -8,8 +8,10 @@ builds:
       - amd64
       - arm64
 
-brews:
+homebrew_casks:
   - name: jumper
+    binaries:
+      - jumper
     repository:
       owner: M-Porter
       name: homebrew-tap
@@ -18,11 +20,8 @@ brews:
     commit_author:
       name: Matt Porter
       email: mtp5129@gmail.com
-    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    commit_msg_template: "Cask update for {{ .ProjectName }} version {{ .Tag }}"
     homepage: "https://github.com/M-Porter/jumper"
-    license: "MIT"
     description: "Quickly jump to your project directories"
     caveats: |
-      Run `jumper setup` for setup instructions.
-    install: |
-      bin.install "jumper"
+      See the README for setup instructions: https://github.com/M-Porter/jumper#readme
