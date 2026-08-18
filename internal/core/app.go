@@ -38,6 +38,7 @@ func (a *Application) Analyze() {
 	excludeRegex := lib.RegexpJoinPartsOr(config.Get().SearchExcludes)
 
 	var projectDirs []string
+	var mu sync.Mutex
 	var wg sync.WaitGroup
 
 	counter := 0
@@ -71,8 +72,11 @@ func (a *Application) Analyze() {
 				for _, re := range config.Get().SearchPathStopRegexp() {
 					if re.MatchString(p) {
 						cleanPath := filepath.Dir(p)
+
+						mu.Lock()
 						projectDirs = append(projectDirs, cleanPath)
 						mDirs = append(mDirs, cleanPath)
+						mu.Unlock()
 
 						logger.Log("appending directory", zap.String("path", cleanPath))
 
