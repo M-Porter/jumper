@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sync"
 
 	"github.com/m-porter/configure/v3"
 	"github.com/mitchellh/go-homedir"
@@ -15,6 +16,14 @@ import (
 var config *Config
 
 var conf *configure.Configure
+
+var (
+	homeDirOnce   sync.Once
+	homeDirCached string
+
+	jumperDirOnce   sync.Once
+	jumperDirCached string
+)
 
 type Config struct {
 	// persisted to YAML
@@ -26,21 +35,40 @@ type Config struct {
 	NoNerdFont      bool     `mapstructure:"no_nerd_font"`
 
 	// computed at load time, not persisted
-	HomeDir              string
-	JumperDir            string
-	CacheFileFullPath    string
-	SearchPathStopRegexp []*regexp.Regexp
+	cacheFileFullPath    string
+	searchPathStopRegexp []*regexp.Regexp
+}
+
+func (c *Config) CacheFileFullPath() string {
+	return c.cacheFileFullPath
+}
+
+func (c *Config) SearchPathStopRegexp() []*regexp.Regexp {
+	return c.searchPathStopRegexp
+}
+
+func HomeDir() string {
+	homeDirOnce.Do(func() {
+		hd, err := homedir.Dir()
+		cobra.CheckErr(err)
+		homeDirCached = hd
+	})
+	return homeDirCached
+}
+
+func JumperDir() string {
+	jumperDirOnce.Do(func() {
+		jumperDirCached = filepath.Join(HomeDir(), JumperDirname)
+	})
+	return jumperDirCached
 }
 
 func (c *Config) hydrate() {
-	hd := HomeDir()
-	c.HomeDir = hd
-	c.CacheFileFullPath = filepath.Join(hd, JumperDirname, c.CacheFile)
-	c.JumperDir = filepath.Join(hd, JumperDirname)
+	c.cacheFileFullPath = filepath.Join(JumperDir(), c.CacheFile)
 
 	for _, pathStop := range c.SearchPathStops {
 		pathStopRegexp := regexp.MustCompile(fmt.Sprintf("%s$", regexp.QuoteMeta(pathStop)))
-		c.SearchPathStopRegexp = append(c.SearchPathStopRegexp, pathStopRegexp)
+		c.searchPathStopRegexp = append(c.searchPathStopRegexp, pathStopRegexp)
 	}
 }
 
@@ -53,9 +81,7 @@ func setupConfigure() {
 		return
 	}
 
-	hd := HomeDir()
-
-	configDirFull := filepath.Join(hd, JumperDirname)
+	configDirFull := JumperDir()
 	if _, err := os.Stat(configDirFull); os.IsNotExist(err) {
 		err := os.MkdirAll(configDirFull, os.ModePerm)
 		cobra.CheckErr(err)
@@ -103,11 +129,5 @@ func Save(c *Config) {
 }
 
 func Filepath() string {
-	return filepath.Join(HomeDir(), JumperDirname, fmt.Sprintf("%s.%s", Filename, Type))
-}
-
-func HomeDir() string {
-	hd, err := homedir.Dir()
-	cobra.CheckErr(err)
-	return hd
+	return filepath.Join(JumperDir(), fmt.Sprintf("%s.%s", Filename, Type))
 }

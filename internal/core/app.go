@@ -21,7 +21,7 @@ type Application struct {
 }
 
 func (a *Application) Setup() {
-	isStale, err := isCacheStale(config.Get().CacheFileFullPath)
+	isStale, err := isCacheStale(config.Get().CacheFileFullPath())
 	if os.IsNotExist(err) {
 		a.Analyze()
 	} else {
@@ -45,7 +45,7 @@ func (a *Application) Analyze() {
 	wg.Add(len(config.Get().SearchIncludes))
 
 	for _, search := range config.Get().SearchIncludes {
-		fullSearch := filepath.Join(config.Get().HomeDir, search)
+		fullSearch := filepath.Join(config.HomeDir(), search)
 		logger.Log("analyzing path", zap.String("path", fullSearch))
 
 		go func(inclPath string) {
@@ -68,7 +68,7 @@ func (a *Application) Analyze() {
 					return filepath.SkipDir
 				}
 
-				for _, re := range config.Get().SearchPathStopRegexp {
+				for _, re := range config.Get().SearchPathStopRegexp() {
 					if re.MatchString(p) {
 						cleanPath := filepath.Dir(p)
 						projectDirs = append(projectDirs, cleanPath)
@@ -111,7 +111,7 @@ func (a *Application) Analyze() {
 	logger.Log("number of directories walked", zap.Int("count", counter))
 	logger.Log("projects found", zap.Int("count", len(projectDirs)))
 
-	err := writeToCache(config.Get().CacheFileFullPath, projectDirs)
+	err := writeToCache(config.Get().CacheFileFullPath(), projectDirs)
 	if err != nil {
 		logger.Log("failed writing to cache")
 		cobra.CheckErr(err)
@@ -133,7 +133,7 @@ func (a *Application) emitCacheUpdateEvent() {
 }
 
 func (a *Application) readFromCache() {
-	c, err := readFromCache(config.Get().CacheFileFullPath)
+	c, err := readFromCache(config.Get().CacheFileFullPath())
 	if err != nil {
 		cobra.CheckErr(err)
 	}
