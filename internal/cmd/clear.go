@@ -50,7 +50,7 @@ func ClearCmd() *cobra.Command {
 }
 
 func clearCache() {
-	deleteFile(config.Get().CacheFileFullPath, "Deleting cache", "Could not delete cache")
+	deleteFile(config.Get().CacheFileFullPath(), "Deleting cache", "Could not delete cache")
 }
 
 func clearConfig() {
