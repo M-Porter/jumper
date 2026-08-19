@@ -10,5 +10,6 @@ vendor/
 .idea/
 jumper
 dist/
+temp/
 githubtoken
 .env

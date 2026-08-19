@@ -2,6 +2,10 @@
 
 Quickly jump to your project directories.
 
+![jumper analyze](assets/analyze.gif)
+
+![jumper to](assets/to.gif)
+
 ## Installation
 
 ```
@@ -49,3 +53,18 @@ j() {
 
 If you do not have nerd fonts installed, you can disable those glyphs by adding
 `no_nerd_font: true` to the jumper config (`jumper config edit`).
+
+## Development
+
+UI examples are scripted with [VHS](https://github.com/charmbracelet/vhs) (`brew install vhs`) and
+live in `examples/`. They run the real `analyze` and `to` commands against a hardcoded set of fake
+project directories, never your real project cache or filesystem, so recordings are always safe to
+share. Run one with:
+
+```
+just example analyze
+just example to
+```
+
+This builds the binary and writes a screenshot and GIF into the gitignored `temp/` directory. Copy
+any file you want to keep out of `temp/` yourself, e.g. into an `assets/` folder for the README.

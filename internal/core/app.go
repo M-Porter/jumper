@@ -18,9 +18,14 @@ type Application struct {
 	Directories         []string
 	Cache               *Cache
 	cacheUpdateCallback func()
+	fixture             bool
 }
 
 func (a *Application) Setup() {
+	if a.fixture {
+		return
+	}
+
 	isStale, err := isCacheStale(config.Get().CacheFileFullPath())
 	if os.IsNotExist(err) {
 		a.Analyze()
@@ -35,6 +40,10 @@ func (a *Application) Setup() {
 }
 
 func (a *Application) Analyze() {
+	if a.fixture {
+		return
+	}
+
 	excludeRegex := lib.RegexpJoinPartsOr(config.Get().SearchExcludes)
 
 	var projectDirs []string
@@ -157,6 +166,13 @@ func canSearchDeeper(path, inclPath string) bool {
 }
 
 func NewApp() *Application {
+	if fixd := config.GetFixtureDirectories(); fixd != nil {
+		return &Application{
+			Directories: fixd,
+			fixture:     true,
+		}
+	}
+
 	return &Application{
 		Directories: []string{},
 	}

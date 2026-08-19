@@ -41,3 +41,8 @@ run cmd:
 
 test:
     go test ./...
+
+[doc("Build the binary and run a VHS tape from examples/ to produce a screenshot/gif in temp/.")]
+example name: build
+    mkdir -p temp
+    vhs examples/{{name}}.tape
