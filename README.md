@@ -9,7 +9,7 @@ Quickly jump to your project directories.
 ## Installation
 
 ```
-brew install m-porter/tap/jumper
+brew install --cask m-porter/tap/jumper
 ```
 
 OR
