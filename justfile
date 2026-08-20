@@ -27,6 +27,10 @@ release version:
     fi
     goreleaser release --clean
 
+[doc("Same as just relase but with op cli helper")]
+op-release version:
+    op run --env-file=.env -- just release {{version}}
+
 [doc("Tests goreleaser release")]
 test-release:
     goreleaser release --snapshot --clean
