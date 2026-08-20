@@ -27,10 +27,11 @@ release version:
     fi
     goreleaser release --clean
 
-[doc("Tests the goreleaser process")]
+[doc("Tests goreleaser release")]
 test-release:
     goreleaser release --snapshot --clean
 
+[doc("Tests goreleaser build")]
 build-release:
     goreleaser build --clean --snapshot
 
