@@ -19,7 +19,7 @@ func AnalyzeCommand() *cobra.Command {
 			fmt.Println("Analyzing...")
 			app := core.NewApp()
 			app.Analyze()
-			dirs := app.Directories
+			dirs := app.Directories()
 
 			fmt.Printf("Projects found: %s\n", lipgloss.NewStyle().Foreground(theme.Green).Bold(true).Render(fmt.Sprintf("%d", len(dirs))))
 			for _, dir := range dirs {

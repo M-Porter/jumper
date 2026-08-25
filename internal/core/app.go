@@ -15,10 +15,25 @@ import (
 )
 
 type Application struct {
-	Directories         []string
+	directories         []string
+	dirMu               sync.RWMutex
 	Cache               *Cache
 	cacheUpdateCallback func()
 	fixture             bool
+}
+
+// Directories returns the most recent snapshot of the directory list.
+// It is safe to call concurrently with setDirectories.
+func (a *Application) Directories() []string {
+	a.dirMu.RLock()
+	defer a.dirMu.RUnlock()
+	return a.directories
+}
+
+func (a *Application) setDirectories(dirs []string) {
+	a.dirMu.Lock()
+	defer a.dirMu.Unlock()
+	a.directories = dirs
 }
 
 func (a *Application) Setup() {
@@ -151,7 +166,7 @@ func (a *Application) readFromCache() {
 		cobra.CheckErr(err)
 	}
 	if c != nil {
-		a.Directories = c.Directories
+		a.setDirectories(c.Directories)
 		a.Cache = c
 	}
 }
@@ -168,12 +183,12 @@ func canSearchDeeper(path, inclPath string) bool {
 func NewApp() *Application {
 	if fixd := config.GetFixtureDirectories(); fixd != nil {
 		return &Application{
-			Directories: fixd,
+			directories: fixd,
 			fixture:     true,
 		}
 	}
 
 	return &Application{
-		Directories: []string{},
+		directories: []string{},
 	}
 }
