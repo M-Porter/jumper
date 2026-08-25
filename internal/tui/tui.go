@@ -44,7 +44,7 @@ type model struct {
 
 func (m *model) Init() tea.Cmd {
 	return tea.Batch(
-		searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano()),
+		searchCmd(m.App.Directories(), m.InputValue, time.Now().UnixNano()),
 		func() tea.Msg {
 			m.App.Setup()
 			return cacheUpdatedEvent{}
@@ -60,7 +60,7 @@ func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	case cacheUpdatedEvent:
 		logger.Log("cacheUpdatedEvent received")
-		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+		return m, searchCmd(m.App.Directories(), m.InputValue, time.Now().UnixNano())
 
 	case tea.WindowSizeMsg:
 		size := message.(tea.WindowSizeMsg)
@@ -96,22 +96,22 @@ func (m *model) handleKeyMsg(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 	case "delete", "ctrl+h":
 		m.InputValue = ""
-		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+		return m, searchCmd(m.App.Directories(), m.InputValue, time.Now().UnixNano())
 
 	case "backspace":
 		if len(m.InputValue) > 0 {
 			m.InputValue = m.InputValue[:len(m.InputValue)-1]
 		}
-		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+		return m, searchCmd(m.App.Directories(), m.InputValue, time.Now().UnixNano())
 
 	case "space":
 		m.InputValue += " "
-		return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+		return m, searchCmd(m.App.Directories(), m.InputValue, time.Now().UnixNano())
 
 	default:
 		if len(msg.Text) > 0 {
 			m.InputValue += msg.Text
-			return m, searchCmd(m.App.Directories, m.InputValue, time.Now().UnixNano())
+			return m, searchCmd(m.App.Directories(), m.InputValue, time.Now().UnixNano())
 		}
 	}
 
@@ -126,7 +126,7 @@ func (m *model) View() tea.View {
 		width = m.WindowSize.Width
 	}
 
-	searchBox := SearchBoxComponent(m.InputValue, len(m.ListItems), len(m.App.Directories), width)
+	searchBox := SearchBoxComponent(m.InputValue, len(m.ListItems), len(m.App.Directories()), width)
 	output = append(output, searchBox)
 
 	statusBar := StatusBarComponent(StatusBarParams{
